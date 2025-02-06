@@ -19,7 +19,7 @@
 		}
 	@endphp
 	@if (count($values))
-    <div class="well well-sm existing-file">
+    <div class="well well-sm existing-file mb-2">
     	@foreach($values as $key => $file_path)
     		<div class="file-preview">
     			@if (isset($field['temporary']))
@@ -36,11 +36,11 @@
     @endif
 	{{-- Show the file picker on CREATE form. --}}
 	<input name="{{ $field['name'] }}[]" type="hidden" value="">
-	<div class="backstrap-file mt-2">
+	<div class="backstrap-file">
 		<input
 	        type="file"
 	        name="{{ $field['name'] }}[]"
-	        @include('crud::fields.inc.attributes', ['default_class' =>  isset($field['value']) && $field['value']!=null?'file_input backstrap-file-input':'file_input backstrap-file-input'])
+	        @include('crud::fields.inc.attributes', ['default_class' => 'file_input backstrap-file-input'])
 	        multiple
 	    >
         <label class="backstrap-file-label" for="customFile"></label>
@@ -56,7 +56,7 @@
 {{-- ########################################## --}}
 {{-- Extra CSS and JS for this particular field --}}
 	@push('crud_fields_styles')
-	@loadOnce('upload_field_styles')
+	@bassetBlock('backpack/crud/fields/upload-multiple-field.css')
 	<style type="text/css">
 		.existing-file {
 			border: 1px solid rgba(0,40,100,.12);
@@ -120,6 +120,16 @@
 			font-weight: 400!important;
 		}
 
+		.backstrap-file-label[has-selected-files=true] {
+			display: inline-table;
+			width: 100%;
+		}
+
+		.backstrap-file-label[has-selected-files=true] .badge {
+			margin-right: 5px;
+			margin-bottom: 5px;
+		}
+
 		.backstrap-file-label::after {
 			position: absolute;
 			top: 0;
@@ -137,16 +147,50 @@
 			border-radius: 0 0.25rem 0.25rem 0;
 		}
 	</style>
-	@endLoadOnce
+	@endBassetBlock
 	@endpush
+
     @push('crud_fields_scripts')
-    	@loadOnce('bpFieldInitUploadMultipleElement')
+    	@bassetBlock('backpack/crud/fields/upload-multiple-field.js')
         <script>
         	function bpFieldInitUploadMultipleElement(element) {
         		var fieldName = element.attr('data-field-name');
         		var clearFileButton = element.find(".file-clear-button");
         		var fileInput = element.find("input[type=file]");
         		var inputLabel = element.find("label.backstrap-file-label");
+				let existingFiles = fileInput.parent().siblings('.existing-file');
+
+				if(fileInput.attr('data-row-number')) {
+					let selectedFiles = [];
+					existingFiles.find('a.file-clear-button').each(function(item) {
+						selectedFiles.push($(this).data('filename'));
+					});
+
+					$('<input type="hidden" class="order-uploads" name="_order_'+fieldName+'" value="'+selectedFiles+'">').insertAfter(fileInput);
+
+					var observer = new MutationObserver(function(mutations) {
+						mutations.forEach(function(mutation) {
+							if(mutation.attributeName == 'data-row-number') {
+								let field = $(mutation.target);
+
+								fieldOrder = field.siblings('input[name="'+mutation.target.getAttribute('name').slice(0,-2)+'"]')
+								fieldOrder.attr('name', '_order_'+mutation.target.getAttribute('name').slice(0,-2));
+								let selectedFiles = [];
+								fieldOrder.parent().siblings('.existing-file').find('a.file-clear-button').each(function(item) {
+									selectedFiles.push($(this).data('filename'));
+								});
+								fieldOrder.val(selectedFiles);
+
+								fieldClear = field.siblings('.clear-files');
+								fieldClear.attr('name', 'clear_'+mutation.target.getAttribute('name'));
+							}
+						});
+					});
+
+					observer.observe(fileInput[0], {
+						attributes: true,
+					});
+				}
 
 		        clearFileButton.click(function(e) {
 		        	e.preventDefault();
@@ -154,22 +198,51 @@
 		        	var parent = $(this).parent();
 		        	// remove the filename and button
 		        	parent.remove();
+
+					if(fileInput.attr('data-row-number')) {
+						let selectedFiles = [];
+						fileInput.parent().siblings('.existing-file').find('a.file-clear-button').each(function(item) {
+							selectedFiles.push($(this).data('filename'));
+						});
+						if(selectedFiles.length > 0) {
+							fileInput.siblings('.order-uploads').val(selectedFiles);
+						} else {
+							fileInput.siblings('.order-uploads').remove();
+						}
+					}
 		        	// if the file container is empty, remove it
 		        	if ($.trim(container.html())=='') {
 		        		container.remove();
 		        	}
-		        	$("<input type='hidden' name='clear_"+fieldName+"[]' value='"+$(this).data('filename')+"'>").insertAfter(fileInput);
+		        	$("<input type='hidden' class='clear-files' name='clear_"+fieldName+"[]' value='"+$(this).data('filename')+"'>").insertAfter(fileInput);
 		        });
 
 		        fileInput.change(function() {
-	                inputLabel.html("{{trans('backpack::crud.upload_multiple_files_selected')}}");
 					let selectedFiles = [];
+					let existingFiles = fileInput.parent().siblings('.existing-file');
 
 					Array.from($(this)[0].files).forEach(file => {
 						selectedFiles.push({name: file.name, type: file.type})
 					});
 
 					element.find('input').first().val(JSON.stringify(selectedFiles)).trigger('change');
+
+					// create a bunch of span elements with the selected files names to display in the label
+					let files = '';
+					selectedFiles.forEach(file => {
+						files += '<span class="badge mt-1 mb-1 text-bg-secondary badge-primary">'+file.name+'</span> ';
+					});
+					
+					// if existing files is not on the page, create a new div a prepend it to the fileInput
+					if(existingFiles.length === 0) {
+						existingFiles = $('<div class="well well-sm existing-file mb-2"></div>');
+						existingFiles.insertBefore(element.find('input[type=hidden]').first());
+						existingFiles.html(files);
+					}else {
+						// if existing files is on page show the added files after the uploaded ones
+						existingFiles.append(files);
+					}
+
 		        	// remove the hidden input, so that the setXAttribute method is no longer triggered
 					$(this).next("input[type=hidden]:not([name='clear_"+fieldName+"[]'])").remove();
 		        });
@@ -199,5 +272,5 @@
 				});
         	}
         </script>
-        @endLoadOnce
+        @endBassetBlock
     @endpush

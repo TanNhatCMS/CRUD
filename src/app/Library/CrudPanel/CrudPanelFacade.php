@@ -23,7 +23,8 @@ use Illuminate\Support\Facades\Facade;
  * @method static CrudPanel addColumn(array $column)
  * @method static CrudPanel addColumns(array $columns)
  * @method static CrudPanel afterColumn(string $targetColumn)
- * @method static CrudPanel setValidation($class)
+ * @method static CrudPanel setValidation($classOrRulesArray = false, $messages = [], $attributes = [])
+ *
  * @mixin CrudPanel
  */
 class CrudPanelFacade extends Facade

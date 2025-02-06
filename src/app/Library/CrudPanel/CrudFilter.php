@@ -6,10 +6,13 @@ use Backpack\CRUD\app\Exceptions\BackpackProRequiredException;
 use Backpack\CRUD\ViewNamespaces;
 use Closure;
 use Illuminate\Support\Str;
+use Illuminate\Support\Traits\Conditionable;
 use Symfony\Component\HttpFoundation\ParameterBag;
 
 class CrudFilter
 {
+    use Conditionable;
+
     public $name; // the name of the filtered variable (db column name)
 
     public $type = 'select2'; // the name of the filter view that will be loaded
@@ -219,7 +222,7 @@ class CrudFilter
 
     /**
      * Remove an attribute from one field's definition array.
-     * (ununsed function).
+     * (unused function).
      *
      * @param  string  $field  The name of the field.
      * @param  string  $attribute  The name of the attribute being removed.
@@ -325,7 +328,7 @@ class CrudFilter
      * For example, the dropdown, select2 and select2 filters let the user select
      * pre-determined values to filter with. This is how to set those values that will be picked up.
      *
-     * @param  array|function  $value  Key-value array with values for the user to pick from, or a function which also return a Key-value array.
+     * @param  array|string|function  $value  Key-value array with values for the user to pick from, or a function which also return a Key-value array.
      * @return CrudFilter
      */
     public function values($value)
@@ -342,7 +345,7 @@ class CrudFilter
      *
      * Alias of the values() method.
      *
-     * @param  array|function  $value  Key-value array with values for the user to pick from, or a function which also return a Key-value array.
+     * @param  array|string|function  $value  Key-value array with values for the user to pick from, or a function which also return a Key-value array.
      * @return CrudFilter
      */
     public function options($value)
@@ -360,6 +363,7 @@ class CrudFilter
     public function view($value)
     {
         $this->view = $value;
+        $this->options['view'] = $value;
 
         return $this->save();
     }
@@ -554,7 +558,7 @@ class CrudFilter
                 break;
 
             default:
-                abort(500, 'Unknown filter operator.');
+                abort(500, 'Unknown filter operator.', ['developer-error-exception']);
                 break;
         }
     }
@@ -579,7 +583,7 @@ class CrudFilter
     }
 
     /**
-     * Dump and die. Duumps the current object to the screen,
+     * Dump and die. Dumps the current object to the screen,
      * so that the developer can see its contents, then stops
      * the execution.
      *

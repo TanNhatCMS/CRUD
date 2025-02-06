@@ -16,14 +16,14 @@ trait ReorderOperation
     protected function setupReorderRoutes($segment, $routeName, $controller)
     {
         Route::get($segment.'/reorder', [
-            'as'        => $routeName.'.reorder',
-            'uses'      => $controller.'@reorder',
+            'as' => $routeName.'.reorder',
+            'uses' => $controller.'@reorder',
             'operation' => 'reorder',
         ]);
 
         Route::post($segment.'/reorder', [
-            'as'        => $routeName.'.save.reorder',
-            'uses'      => $controller.'@saveReorder',
+            'as' => $routeName.'.save.reorder',
+            'uses' => $controller.'@saveReorder',
             'operation' => 'reorder',
         ]);
     }
@@ -38,6 +38,12 @@ trait ReorderOperation
 
         $this->crud->operation('reorder', function () {
             $this->crud->loadDefaultOperationSettingsFromConfig();
+            $this->crud->setOperationSetting('reorderColumnNames', [
+                'parent_id' => 'parent_id',
+                'lft' => 'lft',
+                'rgt' => 'rgt',
+                'depth' => 'depth',
+            ]);
         });
 
         $this->crud->operation('list', function () {
@@ -50,7 +56,7 @@ trait ReorderOperation
      *
      *  Database columns needed: id, parent_id, lft, rgt, depth, name/title
      *
-     *  @return Response
+     * @return \Illuminate\Contracts\View\View
      */
     public function reorder()
     {

@@ -11,7 +11,7 @@
             this.name = name;
             // get the current input
             this.$input = this.activeInput;
-            // get the field wraper
+            // get the field wrapper
             this.wrapper = this.inputWrapper;
 
             // in case `bp-field-main-input` is specified on a field input, use that one as input
@@ -85,7 +85,8 @@
             if(this.isSubfield) {
                 window.crud.subfieldsCallbacks[this.parent.name] ??= [];
                 window.crud.subfieldsCallbacks[this.parent.name].push({ closure, field: this });
-                this.wrapper.trigger('CrudField:subfieldCallbacksUpdated');
+
+                this.parent.wrapper.trigger('CrudField:subfieldCallbacksUpdated');
                 return this;
             }
 
@@ -99,9 +100,14 @@
 
         change() {
             if(this.isSubfield) {
-                window.crud.subfieldsCallbacks[this.parent.name]?.forEach(callback => callback.triggerChange = true);
+                window.crud.subfieldsCallbacks[this.parent.name]?.forEach(function(callback) {
+                    if(callback.field.name === this.name) {
+                        callback.triggerChange = true;
+                    }
+                }, this);
             } else {
-                this.$input.trigger('change');
+                let event = new Event('change');
+                this.input?.dispatchEvent(event);
             }
 
             return this;
@@ -109,7 +115,8 @@
 
         show(value = true) {
             this.wrapper.toggleClass('d-none', !value);
-            this.$input.trigger(`CrudField:${value ? 'show' : 'hide'}`);
+            let event = new Event(`CrudField:${value ? 'show' : 'hide'}`);
+            this.input?.dispatchEvent(event);
             return this;
         }
 
@@ -119,7 +126,8 @@
 
         enable(value = true) {
             this.$input.attr('disabled', !value && 'disabled');
-            this.$input.trigger(`CrudField:${value ? 'enable' : 'disable'}`);
+            let event = new Event(`CrudField:${value ? 'enable' : 'disable'}`);
+            this.input?.dispatchEvent(event);
             return this;
         }
 
@@ -129,7 +137,8 @@
 
         require(value = true) {
             this.wrapper.toggleClass('required', value);
-            this.$input.trigger(`CrudField:${value ? 'require' : 'unrequire'}`);
+            let event = new Event(`CrudField:${value ? 'require' : 'unrequire'}`);
+            this.input?.dispatchEvent(event);
             return this;
         }
 
@@ -149,11 +158,12 @@
         subfield(name, rowNumber = false) {
             let subfield = new CrudField(this.name);
             subfield.name = name;
+            subfield.parent = this;                
+            
 
             if(!rowNumber) {
                 subfield.isSubfield = true;
                 subfield.subfieldHolder = this.name; // deprecated
-                subfield.parent = this;
             } else {
                 subfield.rowNumber = rowNumber;
                 subfield.wrapper = $(`[data-repeatable-identifier="${this.name}"][data-row-number="${rowNumber}"]`).find(`[bp-field-wrapper][bp-field-name$="${name}"]`);
@@ -175,6 +185,8 @@
      */
     window.crud = {
         ...window.crud,
+
+        action: "{{ $action ?? "" }}",
 
         // Subfields callbacks holder
         subfieldsCallbacks: [],

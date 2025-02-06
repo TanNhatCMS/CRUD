@@ -4,6 +4,7 @@ namespace Backpack\CRUD\app\Library\CrudPanel\Traits;
 
 use Backpack\CRUD\app\Library\CrudPanel\CrudField;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Str;
 
 trait Fields
 {
@@ -109,6 +110,7 @@ trait Fields
 
         $this->enableTabsIfFieldUsesThem($field);
         $this->addFieldToOperationSettings($field);
+        (new CrudField($field['name']))->callRegisteredAttributeMacros();
 
         return $this;
     }
@@ -232,10 +234,9 @@ trait Fields
     {
         $fieldsArray = $this->getCleanStateFields();
         $field = $this->firstFieldWhere('name', $fieldName);
-        $fieldKey = $this->getFieldKey($field);
 
         foreach ($modifications as $attributeName => $attributeValue) {
-            $fieldsArray[$fieldKey][$attributeName] = $attributeValue;
+            $fieldsArray[$field['name']][$attributeName] = $attributeValue;
         }
 
         $this->enableTabsIfFieldUsesThem($modifications);
@@ -256,7 +257,7 @@ trait Fields
 
     /**
      * Check if field is the first of its type in the given fields array.
-     * It's used in each field_type.blade.php to determine wether to push the css and js content or not (we only need to push the js and css for a field the first time it's loaded in the form, not any subsequent times).
+     * It's used in each field_type.blade.php to determine whether to push the css and js content or not (we only need to push the js and css for a field the first time it's loaded in the form, not any subsequent times).
      *
      * @param  array  $field  The current field being tested if it's the first of its type.
      * @return bool true/false
@@ -271,41 +272,6 @@ trait Fields
         }
 
         return false;
-    }
-
-    /**
-     * Decode attributes that are casted as array/object/json in the model.
-     * So that they are not json_encoded twice before they are stored in the db
-     * (once by Backpack in front-end, once by Laravel Attribute Casting).
-     *
-     * @param  array  $input
-     * @param  mixed  $model
-     * @return array
-     */
-    public function decodeJsonCastedAttributes($input, $model = false)
-    {
-        $model = $model ? $model : $this->model;
-        $fields = $this->getCleanStateFields();
-        $casted_attributes = $model->getCastedAttributes();
-
-        foreach ($fields as $field) {
-            // Test the field is castable
-            if (isset($field['name']) && is_string($field['name']) && array_key_exists($field['name'], $casted_attributes)) {
-                // Handle JSON field types
-                $jsonCastables = ['array', 'object', 'json'];
-                $fieldCasting = $casted_attributes[$field['name']];
-
-                if (in_array($fieldCasting, $jsonCastables) && isset($input[$field['name']]) && ! empty($input[$field['name']]) && ! is_array($input[$field['name']])) {
-                    try {
-                        $input[$field['name']] = json_decode($input[$field['name']]);
-                    } catch (\Exception $e) {
-                        $input[$field['name']] = [];
-                    }
-                }
-            }
-        }
-
-        return $input;
     }
 
     /**
@@ -343,14 +309,21 @@ trait Fields
      * Check if the create/update form has upload fields.
      * Upload fields are the ones that have "upload" => true defined on them.
      *
-     * @param  string  $form  create/update/both - defaults to 'both'
-     * @param  bool|int  $id  id of the entity - defaults to false
      * @return bool
      */
     public function hasUploadFields()
     {
         $fields = $this->getCleanStateFields();
         $upload_fields = Arr::where($fields, function ($value, $key) {
+            // check if any subfields have uploads
+            if (isset($value['subfields'])) {
+                foreach ($value['subfields'] as $subfield) {
+                    if (isset($subfield['upload']) && $subfield['upload'] === true) {
+                        return true;
+                    }
+                }
+            }
+
             return isset($value['upload']) && $value['upload'] == true;
         });
 
@@ -464,7 +437,21 @@ trait Fields
      */
     public function getAllFieldNames()
     {
-        return Arr::flatten(Arr::pluck($this->getCleanStateFields(), 'name'));
+        $fieldNamesArray = array_column($this->getCleanStateFields(), 'name');
+
+        return array_reduce($fieldNamesArray, function ($names, $item) {
+            if (strpos($item, ',') === false) {
+                $names[] = $item;
+
+                return $names;
+            }
+
+            foreach (explode(',', $item) as $fieldName) {
+                $names[] = $fieldName;
+            }
+
+            return $names;
+        });
     }
 
     /**
@@ -488,7 +475,7 @@ trait Fields
         if (is_string($setting) && class_exists($setting)) {
             $setting = new $setting();
 
-            return is_callable($setting) ? $setting($request) : abort(500, get_class($setting).' is not invokable.');
+            return is_callable($setting) ? $setting($request) : abort(500, get_class($setting).' is not invokable.', ['developer-error-exception']);
         }
 
         return $request->only($this->getAllFieldNames());
@@ -525,21 +512,31 @@ trait Fields
     }
 
     /**
+     * The field hold multiple inputs (one field represent multiple model attributes / relations)
+     * eg: date range or checklist dependency.
+     */
+    public function holdsMultipleInputs(string $fieldName): bool
+    {
+        return Str::contains($fieldName, ',');
+    }
+
+    /**
      * Create and return a CrudField object for that field name.
      *
      * Enables developers to use a fluent syntax to declare their fields,
      * in addition to the existing options:
      * - CRUD::addField(['name' => 'price', 'type' => 'number']);
      * - CRUD::field('price')->type('number');
+     * - CRUD::field(['name' => 'price', 'type' => 'number']);
      *
      * And if the developer uses the CrudField object as Field in their CrudController:
      * - Field::name('price')->type('number');
      *
-     * @param  string  $name  The name of the column in the db, or model attribute.
+     * @param  string|array  $nameOrDefinition  The name of the column in the db, or model attribute.
      * @return CrudField
      */
-    public function field($name)
+    public function field($nameOrDefinition)
     {
-        return new CrudField($name);
+        return new CrudField($nameOrDefinition);
     }
 }

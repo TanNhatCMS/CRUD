@@ -2,18 +2,8 @@
 
 namespace Backpack\CRUD\app\Exceptions;
 
-use Exception;
+use Illuminate\Auth\Access\AuthorizationException;
 
-class AccessDeniedException extends Exception
+class AccessDeniedException extends AuthorizationException
 {
-    /**
-     * Render the exception into an HTTP response.
-     *
-     * @param  \Illuminate\Http\Request
-     * @return \Illuminate\Http\Response
-     */
-    public function render($request)
-    {
-        return response(view('errors.403', ['exception' => $this]), 403);
-    }
 }

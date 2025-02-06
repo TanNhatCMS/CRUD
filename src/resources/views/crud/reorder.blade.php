@@ -7,45 +7,48 @@
       trans('backpack::crud.reorder') => false,
     ];
 
+    $columns = $crud->getOperationSetting('reorderColumnNames');
+
     // if breadcrumbs aren't defined in the CrudController, use the default breadcrumbs
     $breadcrumbs = $breadcrumbs ?? $defaultBreadcrumbs;
 @endphp
 
 @section('header')
-    <div class="container-fluid">
-        <h2>
-            <span class="text-capitalize">{!! $crud->getHeading() ?? $crud->entity_name_plural !!}</span>
-            <small>{!! $crud->getSubheading() ?? trans('backpack::crud.reorder').' '.$crud->entity_name_plural !!}.</small>
-
-            @if ($crud->hasAccess('list'))
+    <section class="header-operation container-fluid animated fadeIn d-flex align-items-baseline d-print-none" bp-section="page-header">
+        <h1 class="text-capitalize mb-0" bp-section="page-heading">{!! $crud->getHeading() ?? $crud->entity_name_plural !!}</h1>
+        <p class="ms-2 ml-2 mb-0" bp-section="page-subheading">{!! $crud->getSubheading() ?? trans('backpack::crud.reorder').' '.$crud->entity_name_plural !!}</p>
+        @if ($crud->hasAccess('list'))
+            <p class="ms-2 ml-2 mb-0" bp-section="page-subheading-back-button">
                 <small><a href="{{ url($crud->route) }}" class="d-print-none font-sm"><i class="la la-angle-double-left"></i> {{ trans('backpack::crud.back_to_all') }} <span>{{ $crud->entity_name_plural }}</span></a></small>
-            @endif
-        </h2>
-    </div>
+            </p>
+        @endif
+    </section>
 @endsection
 
 @section('content')
-    <?php
-    function tree_element($entry, $key, $all_entries, $crud)
-    {
+<?php
+if(!function_exists('tree_element')) {
+    function tree_element($entry, $key, $all_entries, $crud) {
+        $columns = $crud->getOperationSetting('reorderColumnNames');
+
         if (! isset($entry->tree_element_shown)) {
             // mark the element as shown
             $all_entries[$key]->tree_element_shown = true;
             $entry->tree_element_shown = true;
-
+            $entryLabel = $crud->get('reorder.escaped') ? e(object_get($entry, $crud->get('reorder.label'))) : object_get($entry, $crud->get('reorder.label'));
             // show the tree element
             echo '<li id="list_'.$entry->getKey().'">';
-            echo '<div><span class="disclose"><span></span></span>'.object_get($entry, $crud->get('reorder.label')).'</div>';
+            echo '<div><span class="disclose"><span></span></span>'.$entryLabel.'</div>';
 
             // see if this element has any children
             $children = [];
             foreach ($all_entries as $key => $subentry) {
-                if ($subentry->parent_id == $entry->getKey()) {
+                if ($subentry->{$columns['parent_id']} == $entry->getKey()) {
                     $children[] = $subentry;
                 }
             }
 
-            $children = collect($children)->sortBy('lft');
+            $children = collect($children)->sortBy($columns['lft']);
 
             // if it does have children, show them
             if (count($children)) {
@@ -60,29 +63,34 @@
 
         return $entry;
     }
+}
 
     ?>
 
-    <div class="row mt-4">
+    <div class="row mt-4" bp-section="crud-operation-reorder">
         <div class="{{ $crud->getReorderContentClass() }}">
             <div class="card p-4">
                 <p>{{ trans('backpack::crud.reorder_text') }}</p>
 
-                <ol class="sortable mt-0">
-                    <?php
-                    $all_entries = collect($entries->all())->sortBy('lft')->keyBy($crud->getModel()->getKeyName());
-                    $root_entries = $all_entries->filter(function ($item) {
-                        return $item->parent_id == 0;
+                <ol class="sortable mt-0 mb-0">
+                <?php
+                    $all_entries = collect($entries->all())->sortBy($columns['lft'])->keyBy($crud->getModel()->getKeyName());
+                    $root_entries = $all_entries->filter(function ($item) use ($columns) {
+                        return $item->{$columns['parent_id']} == 0;
                     });
                     foreach ($root_entries as $key => $entry) {
                         $root_entries[$key] = tree_element($entry, $key, $all_entries, $crud);
                     }
-                    ?>
+                ?>
                 </ol>
 
             </div>{{-- /.card --}}
 
-            <button id="toArray" class="btn btn-success" data-style="zoom-in"><i class="la la-save"></i> {{ trans('backpack::crud.save') }}</button>
+            <div class="mt-3">
+                <button id="toArray" class="btn btn-success text-light" data-style="zoom-in"><i class="la la-save"></i> {{ trans('backpack::crud.save') }}</button>
+                <a href="{{ $crud->hasAccess('list') ? url($crud->route) : url()->previous() }}" class="btn btn-secondary text-decoration-none"><span class="la la-ban"></span> &nbsp;{{ trans('backpack::crud.cancel') }}</a>
+            </div>
+
         </div>
     </div>
 @endsection
@@ -221,8 +229,8 @@
 @endsection
 
 @section('after_scripts')
-    <script src="{{ asset('packages/jquery-ui-dist/jquery-ui.min.js') }}" type="text/javascript" ></script>
-    <script src="{{ asset('packages/nestedSortable/jquery.mjs.nestedSortable2.js') }}" type="text/javascript" ></script>
+    @basset('https://unpkg.com/jquery-ui@1.13.2/dist/jquery-ui.min.js')
+    @basset(base_path('vendor/backpack/crud/src/resources/assets/libs/jquery.mjs.nestedSortable2.js'))
 
     <script type="text/javascript">
         jQuery(document).ready(function($) {
@@ -255,7 +263,7 @@
 
             $('#toArray').click(function(e){
                 // get the current tree order
-                arraied = $('ol.sortable').nestedSortable('toArray', {startDepthCount: 0});
+                arraied = $('ol.sortable').nestedSortable('toArray', {startDepthCount: 0, expression: /(.+)_(.+)/ });
 
                 // log it
                 //console.log(arraied);

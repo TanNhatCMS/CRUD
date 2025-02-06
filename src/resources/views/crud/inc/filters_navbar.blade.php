@@ -1,7 +1,15 @@
-<nav class="navbar navbar-expand-lg navbar-filters mb-0 pb-0 pt-0">
+<nav class="navbar navbar-expand-lg navbar-filters mb-0 py-0 shadow-none">
       {{-- Brand and toggle get grouped for better mobile display --}}
-      <a class="nav-item d-none d-lg-block"><span class="la la-filter"></span></a>
-      <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#bp-filters-navbar" aria-controls="bp-filters-navbar" aria-expanded="false" aria-label="{{ trans('backpack::crud.toggle_filters') }}">
+      <a class="nav-item d-none d-lg-block my-auto"><span class="la la-filter"></span></a>
+      <button class="navbar-toggler ms-3"
+              type="button"
+              data-toggle="collapse"  {{-- for Bootstrap v4 --}}
+              data-target="#bp-filters-navbar" {{-- for Bootstrap v4 --}}
+              data-bs-toggle="collapse"   {{-- for Bootstrap v5 --}}
+              data-bs-target="#bp-filters-navbar"   {{-- for Bootstrap v5 --}}
+              aria-controls="bp-filters-navbar"
+              aria-expanded="false"
+              aria-label="{{ trans('backpack::crud.toggle_filters') }}">
         <span class="la la-filter"></span> {{ trans('backpack::crud.filters') }}
       </button>
 
@@ -18,7 +26,7 @@
   </nav>
 
 @push('crud_list_scripts')
-	<script src="{{ asset('packages/URI.js/URI.min.js') }}" type="text/javascript"></script>
+    @basset('https://unpkg.com/urijs@1.19.11/src/URI.min.js')
     <script>
       function addOrUpdateUriParameter(uri, parameter, value) {
             var new_url = normalizeAmpersand(uri);
@@ -45,7 +53,7 @@
 
       }
 
-      function updateDatatablesOnFilterChange(filterName, filterValue, update_url = false) {
+      function updateDatatablesOnFilterChange(filterName, filterValue, update_url = false, debounce = 500) {
         // behaviour for ajax table
         var current_url = crud.table.ajax.url();
         var new_url = addOrUpdateUriParameter(current_url, filterName, filterValue);
@@ -60,10 +68,38 @@
         // and we have a function that will do this update for us after all filters had been cleared.
         if(update_url) {
           // replace the datatables ajax url with new_url and reload it
-          crud.table.ajax.url(new_url).load();
+          callFunctionOnce(function() { refreshDatatablesOnFilterChange(new_url) }, debounce, 'refreshDatatablesOnFilterChange');
         }
 
         return new_url;
+      }
+
+      /**
+       * calls the function func once within the within time window.
+       * this is a debounce function which actually calls the func as
+       * opposed to returning a function that would call func.
+       * 
+       * @param func    the function to call
+       * @param within  the time window in milliseconds, defaults to 300
+       * @param timerId an optional key, defaults to func
+       * 
+       * FROM: https://stackoverflow.com/questions/27787768/debounce-function-in-jquery
+       */
+      if(typeof callFunctionOnce !== 'function') {
+        function callFunctionOnce(func, within = 300, timerId = null) {
+          window.callOnceTimers = window.callOnceTimers || {};
+          timerId = timerId || func;
+          if (window.callOnceTimers[timerId]) {
+            clearTimeout(window.callOnceTimers[timerId]);
+          }
+          window.callOnceTimers[timerId] = setTimeout(func, within);
+        }
+      }
+
+      function refreshDatatablesOnFilterChange(url)
+      {
+        // replace the datatables ajax url with new_url and reload it
+        crud.table.ajax.url(url).load();
       }
 
 

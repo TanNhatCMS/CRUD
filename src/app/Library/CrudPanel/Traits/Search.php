@@ -4,7 +4,6 @@ namespace Backpack\CRUD\app\Library\CrudPanel\Traits;
 
 use Backpack\CRUD\ViewNamespaces;
 use Carbon\Carbon;
-use Doctrine\DBAL\Types\JsonType;
 use Validator;
 
 trait Search
@@ -26,7 +25,7 @@ trait Search
         return $this->query->where(function ($query) use ($searchTerm) {
             foreach ($this->columns() as $column) {
                 if (! isset($column['type'])) {
-                    abort(400, 'Missing column type when trying to apply search term.');
+                    abort(500, 'Missing column type when trying to apply search term.', ['developer-error-exception']);
                 }
 
                 $this->applySearchLogicForColumn($query, $column, $searchTerm);
@@ -46,7 +45,7 @@ trait Search
             $searchLogic = $column['searchLogic'];
 
             // if a closure was passed, execute it
-            if (is_callable($searchLogic)) {
+            if ($searchLogic instanceof \Closure) {
                 return $searchLogic($query, $column, $searchTerm);
             }
 
@@ -56,7 +55,7 @@ trait Search
             }
 
             // if false was passed, don't search this column
-            if ($searchLogic == false) {
+            if ($searchLogic === false) {
                 return;
             }
         }
@@ -91,7 +90,6 @@ trait Search
                     break;
 
                 default:
-                    return;
                     break;
             }
         }
@@ -102,18 +100,19 @@ trait Search
      */
     public function applyDatatableOrder()
     {
-        if (request()->input('order')) {
+        if ($this->getRequest()->input('order')) {
             // clear any past orderBy rules
             $this->query->getQuery()->orders = null;
-            foreach ((array) request()->input('order') as $order) {
+            foreach ((array) $this->getRequest()->input('order') as $order) {
                 $column_number = (int) $order['column'];
                 $column_direction = (strtolower((string) $order['dir']) == 'asc' ? 'ASC' : 'DESC');
                 $column = $this->findColumnById($column_number);
+
                 if ($column['tableColumn'] && ! isset($column['orderLogic'])) {
                     if (method_exists($this->model, 'translationEnabled') &&
                         $this->model->translationEnabled() &&
                         $this->model->isTranslatableAttribute($column['name']) &&
-                        is_a($this->model->getConnection()->getDoctrineColumn($this->model->getTableWithPrefix(), $column['name'])->getType(), JsonType::class)
+                        $this->isJsonColumnType($column['name'])
                     ) {
                         $this->orderByWithPrefix($column['name'].'->'.app()->getLocale(), $column_direction);
                     } else {
@@ -135,13 +134,14 @@ trait Search
         $orderBy = $this->query->toBase()->orders;
         $table = $this->model->getTable();
         $key = $this->model->getKeyName();
+        $groupBy = $this->query->toBase()->groups;
 
         $hasOrderByPrimaryKey = collect($orderBy)->some(function ($item) use ($key, $table) {
             return (isset($item['column']) && $item['column'] === $key)
                 || (isset($item['sql']) && str_contains($item['sql'], "$table.$key"));
         });
 
-        if (! $hasOrderByPrimaryKey) {
+        if (! $hasOrderByPrimaryKey && empty($groupBy)) {
             $this->orderByWithPrefix($key, 'DESC');
         }
     }
@@ -288,6 +288,11 @@ trait Search
             $row_items[0] = $details_row_button.$row_items[0];
         }
 
+        if ($this->getResponsiveTable()) {
+            $responsiveTableTrigger = '<div class="dtr-control d-none cursor-pointer"></div>';
+            $row_items[0] = $responsiveTableTrigger.$row_items[0];
+        }
+
         return $row_items;
     }
 
@@ -395,10 +400,10 @@ trait Search
         }
 
         return [
-            'draw'            => (isset($this->getRequest()['draw']) ? (int) $this->getRequest()['draw'] : 0),
-            'recordsTotal'    => $totalRows,
+            'draw' => (isset($this->getRequest()['draw']) ? (int) $this->getRequest()['draw'] : 0),
+            'recordsTotal' => $totalRows,
             'recordsFiltered' => $filteredRows,
-            'data'            => $rows,
+            'data' => $rows,
         ];
     }
 
@@ -412,5 +417,10 @@ trait Search
     public function getColumnWithTableNamePrefixed($query, $column)
     {
         return $query->getModel()->getTable().'.'.$column;
+    }
+
+    private function isJsonColumnType(string $columnName)
+    {
+        return $this->model->getDbTableSchema()->getColumnType($columnName) === 'json';
     }
 }

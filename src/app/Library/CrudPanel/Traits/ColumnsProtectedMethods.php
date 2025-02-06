@@ -2,6 +2,7 @@
 
 namespace Backpack\CRUD\app\Library\CrudPanel\Traits;
 
+use Backpack\CRUD\app\Library\CrudPanel\CrudColumn;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Str;
 
@@ -46,12 +47,14 @@ trait ColumnsProtectedMethods
     protected function makeSureColumnHasName($column)
     {
         if (is_string($column)) {
-            $column = ['name' => $column];
+            return ['name' => Str::replace(' ', '', $column)];
         }
 
         if (is_array($column) && ! isset($column['name'])) {
             $column['name'] = 'anonymous_column_'.Str::random(5);
         }
+
+        $column['name'] = Str::replace(' ', '', $column['name']);
 
         return $column;
     }
@@ -158,13 +161,12 @@ trait ColumnsProtectedMethods
     }
 
     /**
-     * If a column definition is missing the wrapper element, set the default (empty).
-     * The wrapper is the HTML element that wrappes around the column text.
-     * By defining this array a developer can wrap the text into an anchor (link),
-     * span, div or whatever they want.
+     * @deprecated Never used. Will be removed in a future version.
      *
      * @param  array  $column  Column definition array.
      * @return array Column definition array with wrapper.
+     *
+     * @codeCoverageIgnore
      */
     protected function makeSureColumnHasWrapper($column)
     {
@@ -208,7 +210,7 @@ trait ColumnsProtectedMethods
         }
 
         // if there's a method on the model with this name
-        if (method_exists($this->model, $column['name'])) {
+        if (method_exists($this->model, $column['name']) || $this->model->isRelation($column['name'])) {
             // check model method for possibility of being a relationship
             $column['entity'] = $this->modelMethodIsRelationship($this->model, $column['name']);
 
@@ -229,6 +231,17 @@ trait ColumnsProtectedMethods
         }
 
         return $column;
+    }
+
+    /**
+     * Infer the attribute for the column when needed.
+     *
+     * @param  array  $column
+     * @return void
+     */
+    protected function makeSureColumnHasAttribute(array $column)
+    {
+        return $this->makeSureFieldHasAttribute($column);
     }
 
     /**
@@ -283,6 +296,13 @@ trait ColumnsProtectedMethods
                 array_search($targetColumnName, array_keys($columnsArray)) + 1;
 
             $element = array_pop($columnsArray);
+
+            if ($element['priority'] === count($columnsArray)) {
+                // the priority was most likely auto-set as it corresponds to the column array count
+                // update the priority to the target column position
+                $element['priority'] = $targetColumnPosition;
+            }
+
             $beginningPart = array_slice($columnsArray, 0, $targetColumnPosition, true);
             $endingArrayPart = array_slice($columnsArray, $targetColumnPosition, null, true);
 
@@ -313,5 +333,18 @@ trait ColumnsProtectedMethods
         }
 
         return in_array($name, $columns);
+    }
+
+    /**
+     * Prepare the column attributes and add it to operation settings.
+     */
+    private function prepareAttributesAndAddColumn(array|string $column): CrudColumn
+    {
+        $column = $this->makeSureColumnHasNeededAttributes($column);
+        $this->addColumnToOperationSettings($column);
+
+        $column = (new CrudColumn($column['name']))->callRegisteredAttributeMacros();
+
+        return $column;
     }
 }

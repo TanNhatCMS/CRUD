@@ -3,23 +3,24 @@
 namespace Backpack\CRUD\Tests\Unit\CrudPanel;
 
 use Backpack\CRUD\app\Library\CrudPanel\CrudFilter;
-use Backpack\CRUD\Tests\Unit\Models\User;
+use Backpack\CRUD\Tests\config\CrudPanel\BaseCrudPanel;
+use Backpack\CRUD\Tests\config\Models\User;
 use Config;
 
 /**
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Filters
  * @covers Backpack\CRUD\app\Library\CrudPanel\CrudFilter
  */
-class CrudPanelFiltersTest extends BaseCrudPanelTest
+class CrudPanelFiltersTest extends BaseCrudPanel
 {
     protected $testFilter = [[
-        'name'  => 'my_filter',
-        'type'  => 'simple',
+        'name' => 'my_filter',
+        'type' => 'simple',
         'label' => 'filter label',
     ], false, false, false];
 
     protected $testFilter_2 = [[
-        'name'  => 'my_filter_2',
+        'name' => 'my_filter_2',
         'label' => 'filter label 2',
     ], false, false, false];
 

@@ -2,6 +2,7 @@
 
 namespace Backpack\CRUD\app\Library\CrudPanel\Traits;
 
+use Illuminate\Contracts\Database\Query\Builder as QueryBuilder;
 use Illuminate\Database\Eloquent\Builder;
 
 trait Query
@@ -63,6 +64,13 @@ trait Query
         return $this;
     }
 
+    public function setQuery(QueryBuilder $query)
+    {
+        $this->query = $query;
+
+        return $this;
+    }
+
     /**
      * Use eager loading to reduce the number of queries on the table view.
      *
@@ -105,7 +113,7 @@ trait Query
 
         $orderLogic = $column['orderLogic'];
 
-        if (is_callable($orderLogic)) {
+        if ($orderLogic instanceof \Closure) {
             return $orderLogic($this->query, $column, $columnDirection);
         }
 
@@ -173,10 +181,12 @@ trait Query
      * @param  string  $column_direction
      * @return \Illuminate\Database\Eloquent\Builder
      */
-    public function orderByWithPrefix($column_name, $column_direction = 'ASC')
+    public function orderByWithPrefix($column_name, $column_direction = 'asc')
     {
+        $column_direction = strtolower($column_direction);
+
         if ($this->query->getQuery()->joins !== null) {
-            return $this->query->orderByRaw($this->model->getTableWithPrefix().'.'.$column_name.' '.$column_direction);
+            return $this->query->orderBy("{$this->model->getTableWithPrefix()}.{$column_name}", $column_direction);
         }
 
         return $this->query->orderBy($column_name, $column_direction);
@@ -257,15 +267,19 @@ trait Query
         // - orders/limit/offset because we want the "full query count" where orders don't matter and limit/offset would break the total count
         $subQuery = $crudQuery->cloneWithout(['columns', 'orders', 'limit', 'offset']);
 
-        // re-set the previous query bindings
-        $subQuery->setBindings($crudQuery->getRawBindings());
-
-        // select only one column for the count
-        $subQuery->select($modelTable.'.'.$this->model->getKeyName());
+        // select minimum possible columns for the count
+        $minimumColumns = ($crudQuery->groups || $crudQuery->havings) ? $modelTable.'.*' : $modelTable.'.'.$this->model->getKeyName();
+        $subQuery->select($minimumColumns);
 
         // in case there are raw expressions we need to add them too.
         foreach ($expressionColumns as $expression) {
             $subQuery->selectRaw($expression);
+        }
+
+        // re-set the previous query bindings
+        //dump($crudQuery->getColumns(), get_class($crudQuery), get_class($subQuery));
+        foreach ($crudQuery->getRawBindings() as $type => $binding) {
+            $subQuery->setBindings($binding, $type);
         }
 
         $outerQuery = $outerQuery->fromSub($subQuery, str_replace('.', '_', $modelTable).'_aggregator');

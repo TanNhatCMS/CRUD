@@ -3,11 +3,12 @@
 namespace Backpack\CRUD\Tests\Unit\CrudPanel;
 
 use Backpack\CRUD\app\Exceptions\AccessDeniedException;
+use Backpack\CRUD\Tests\config\CrudPanel\BaseCrudPanel;
 
 /**
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Access
  */
-class CrudPanelAccessTest extends BaseCrudPanelTest
+class CrudPanelAccessTest extends BaseCrudPanel
 {
     private $unknownPermission = 'unknownPermission';
 
@@ -100,5 +101,61 @@ class CrudPanelAccessTest extends BaseCrudPanelTest
         $this->expectException(AccessDeniedException::class);
 
         $this->crudPanel->hasAccessOrFail($this->unknownPermission);
+    }
+
+    public function testItCanUseAClosureToResolveAccess()
+    {
+        $this->crudPanel->setAccessCondition('list', function () {
+            return true;
+        });
+
+        $this->assertTrue($this->crudPanel->getAccessCondition('list') instanceof \Closure);
+
+        $this->assertTrue($this->crudPanel->hasAccess('list'));
+    }
+
+    public function testItCanUseAClosureToResolveAccessForMultipleOperations()
+    {
+        $this->crudPanel->setAccessCondition(['list', 'create'], function () {
+            return true;
+        });
+
+        $this->assertTrue($this->crudPanel->getAccessCondition('list') instanceof \Closure);
+
+        $this->assertTrue($this->crudPanel->hasAccess('list'));
+    }
+
+    public function testItCanCheckIfAnOperationHasAccessConditions()
+    {
+        $this->crudPanel->setAccessCondition(['list', 'create'], function () {
+            return true;
+        });
+
+        $this->assertTrue($this->crudPanel->hasAccessCondition('list'));
+        $this->assertFalse($this->crudPanel->hasAccessCondition('delete'));
+    }
+
+    public function testItCanCheckAccessToAll()
+    {
+        $this->crudPanel->allowAccess(['list', 'create'], function () {
+            return true;
+        });
+
+        $this->assertTrue($this->crudPanel->hasAccessToAll(['list', 'create']));
+        $this->assertFalse($this->crudPanel->hasAccessToAll(['list', 'create', 'delete']));
+    }
+
+    public function testItCanAllowAccessToSomeSpecificOperationWhileDenyingOthers()
+    {
+        $this->crudPanel->allowAccess(['list', 'create'], function () {
+            return true;
+        });
+
+        $this->assertTrue($this->crudPanel->hasAccessToAll(['list', 'create']));
+
+        $this->crudPanel->allowAccessOnlyTo('list');
+
+        $this->assertTrue($this->crudPanel->hasAccess('list'));
+        $this->assertFalse($this->crudPanel->hasAccess('create'));
     }
 }

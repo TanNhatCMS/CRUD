@@ -21,7 +21,7 @@
         @if(isset($field['prefix'])) <div class="input-group-prepend"><span class="input-group-text">{!! $field['prefix'] !!}</span></div> @endif
         <select
             name="{{ $field['name'] }}"
-            @include('crud::fields.inc.attributes', ['default_class' =>  'form-control'])
+            @include('crud::fields.inc.attributes', ['default_class' => 'form-control form-select'])
             >
 
                 @if ($field['allows_null'])
@@ -55,7 +55,7 @@
                     @endif
                 @endif
         </select>
-        @if(isset($field['suffix'])) <div class="input-group-append"><span class="input-group-text">{!! $field['suffix'] !!}</span></div> @endif
+        @if(isset($field['suffix'])) <span class="input-group-text">{!! $field['suffix'] !!}</span> @endif
     @if(isset($field['prefix']) || isset($field['suffix'])) </div> @endif
 
     {{-- HINT --}}

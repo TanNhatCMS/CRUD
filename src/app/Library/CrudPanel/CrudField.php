@@ -2,6 +2,9 @@
 
 namespace Backpack\CRUD\app\Library\CrudPanel;
 
+use Backpack\CRUD\app\Library\CrudPanel\Traits\Support\MacroableWithAttributes;
+use Illuminate\Support\Traits\Conditionable;
+
 /**
  * Adds fluent syntax to Backpack CRUD Fields.
  *
@@ -31,15 +34,30 @@ namespace Backpack\CRUD\app\Library\CrudPanel;
  * @method self addMorphOption(string $key, string $label, array $options)
  * @method self morphTypeField(array $value)
  * @method self morphIdField(array $value)
+ * @method self upload(bool $value)
  */
 class CrudField
 {
+    use MacroableWithAttributes;
+    use Conditionable;
+
     protected $attributes;
 
-    public function __construct($name)
+    public function __construct($nameOrDefinitionArray)
     {
-        if (empty($name)) {
-            abort(500, 'Field name can\'t be empty.');
+        if (empty($nameOrDefinitionArray)) {
+            abort(500, 'Field name can\'t be empty.', ['developer-error-exception']);
+        }
+
+        if (is_array($nameOrDefinitionArray)) {
+            $this->crud()->addField($nameOrDefinitionArray);
+            $name = $nameOrDefinitionArray['name'];
+        } else {
+            $name = $nameOrDefinitionArray;
+        }
+
+        if (is_array($name)) {
+            abort(500, 'Field name can\'t be an array. It should be a string. Error in field: '.json_encode($name), ['developer-error-exception']);
         }
 
         $field = $this->crud()->firstFieldWhere('name', $name);
@@ -184,7 +202,7 @@ class CrudField
      */
     public function size($numberOfColumns)
     {
-        $this->attributes['wrapper']['class'] = 'form-group col-md-'.$numberOfColumns;
+        $this->attributes['wrapper']['class'] = 'form-group col-md-'.$numberOfColumns.' mb-3';
 
         return $this->save();
     }
@@ -212,8 +230,25 @@ class CrudField
      */
     public function subfields($subfields)
     {
+        $callAttributeMacro = ! isset($this->attributes['subfields']);
         $this->attributes['subfields'] = $subfields;
         $this->attributes = $this->crud()->makeSureFieldHasNecessaryAttributes($this->attributes);
+        if ($callAttributeMacro) {
+            $this->callRegisteredAttributeMacros();
+        }
+
+        return $this->save();
+    }
+
+    /**
+     * Mark the field has having upload functionality, so that the form would become multipart.
+     *
+     * @param  bool  $upload
+     * @return self
+     */
+    public function upload($upload = true)
+    {
+        $this->attributes['upload'] = $upload;
 
         return $this->save();
     }
@@ -290,7 +325,7 @@ class CrudField
         $morphField = $this->crud()->fields()[$this->attributes['name']];
 
         if (empty($morphField) || ($morphField['relation_type'] ?? '') !== 'MorphTo') {
-            throw new \Exception('Trying to configure the morphType on a non-morphTo field. Check if field and relation name matches.');
+            abort(500, 'Trying to configure the morphType on a non-morphTo field. Check if field and relation name matches.', ['developer-error-exception']);
         }
         [$morphTypeField, $morphIdField] = $morphField['subfields'];
 
@@ -316,7 +351,7 @@ class CrudField
         $morphField = $this->crud()->fields()[$this->attributes['name']];
 
         if (empty($morphField) || ($morphField['relation_type'] ?? '') !== 'MorphTo') {
-            throw new \Exception('Trying to configure the morphType on a non-morphTo field. Check if field and relation name matches.');
+            abort(500, 'Trying to configure the morphType on a non-morphTo field. Check if field and relation name matches.', ['developer-error-exception']);
         }
 
         [$morphTypeField, $morphIdField] = $morphField['subfields'];
@@ -334,6 +369,7 @@ class CrudField
     {
         return $this->attributes;
     }
+
     // ---------------
     // PRIVATE METHODS
     // ---------------
@@ -373,9 +409,23 @@ class CrudField
             $this->crud()->modifyField($key, $this->attributes);
         } else {
             $this->crud()->addField($this->attributes);
+            $this->attributes = $this->getFreshAttributes();
         }
 
         return $this;
+    }
+
+    /**
+     * Get the fresh attributes for the current field.
+     *
+     * @return array
+     */
+    private function getFreshAttributes()
+    {
+        $key = isset($this->attributes['key']) ? 'key' : 'name';
+        $search = $this->attributes['key'] ?? $this->attributes['name'];
+
+        return $this->crud()->firstFieldWhere($key, $search);
     }
 
     // -----------------
@@ -398,7 +448,7 @@ class CrudField
     }
 
     /**
-     * Dump and die. Duumps the current object to the screen,
+     * Dump and die. Dumps the current object to the screen,
      * so that the developer can see its contents, then stops
      * the execution.
      *
@@ -430,6 +480,10 @@ class CrudField
      */
     public function __call($method, $parameters)
     {
+        if (static::hasMacro($method)) {
+            return $this->macroCall($method, $parameters);
+        }
+
         $this->setAttributeValue($method, $parameters[0]);
 
         return $this->save();

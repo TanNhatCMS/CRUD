@@ -13,7 +13,7 @@ jobs:
     steps:
       
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
             ref: main
             fetch-depth: 0
@@ -30,7 +30,7 @@ jobs:
           tools: composer:v2
       - name: Install dependencies
         run: |
-            composer require "laravel/framework:^10.0" "phpunit/phpunit:^9.0" "doctrine/dbal:^3.0" --no-interaction --no-update --no-suggest
+            composer require "laravel/framework:^10.0" "phpunit/phpunit:^10.0" "doctrine/dbal:^3.0" --no-interaction --no-update --no-suggest
             composer update --prefer-dist --no-interaction
       - name: Execute tests
         run: vendor/bin/phpunit --coverage-clover coverage.xml
@@ -43,7 +43,7 @@ jobs:
           metric: elements
           rounded-precision: 2
       - name: Generate the badge SVG image
-        uses: emibcn/badge-action@v1
+        uses: emibcn/badge-action@v2
         id: badge
         with:
           label: coverage
@@ -59,7 +59,7 @@ jobs:
             steps.test-coverage.outputs.coverage > 20 && 'red,red,red,orange' ||
             'red' }}
       - name: Upload badge as artifact
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: badge
           path: test-coverage.svg

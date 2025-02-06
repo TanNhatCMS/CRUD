@@ -3,7 +3,7 @@
 namespace Backpack\CRUD\Tests\Unit\CrudPanel;
 
 use Backpack\CRUD\app\Library\CrudPanel\CrudColumn;
-use Backpack\CRUD\Tests\Unit\Models\User;
+use Backpack\CRUD\Tests\config\Models\User;
 
 /**
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Columns
@@ -11,297 +11,297 @@ use Backpack\CRUD\Tests\Unit\Models\User;
  * @covers Backpack\CRUD\app\Library\CrudPanel\CrudColumn
  * @covers Backpack\CRUD\app\Library\CrudPanel\CrudPanel
  */
-class CrudPanelColumnsTest extends BaseDBCrudPanelTest
+class CrudPanelColumnsTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseCrudPanel
 {
     private $oneColumnArray = [
-        'name'  => 'column1',
+        'name' => 'column1',
         'label' => 'Column1',
     ];
 
     private $expectedOneColumnArray = [
         'column1' => [
-            'label'       => 'Column1',
-            'name'        => 'column1',
-            'key'         => 'column1',
-            'type'        => 'text',
+            'label' => 'Column1',
+            'name' => 'column1',
+            'key' => 'column1',
+            'type' => 'text',
             'tableColumn' => false,
-            'orderable'   => false,
+            'orderable' => false,
             'searchLogic' => false,
-            'priority'    => 0,
+            'priority' => 0,
         ],
     ];
 
     private $otherOneColumnArray = [
-        'name'  => 'column4',
+        'name' => 'column4',
         'label' => 'Column4',
     ];
 
     private $twoColumnsArray = [
         [
-            'name'  => 'column1',
+            'name' => 'column1',
             'label' => 'Column1',
         ],
         [
-            'name'  => 'column2',
+            'name' => 'column2',
             'label' => 'Column2',
         ],
     ];
 
     private $expectedTwoColumnsArray = [
         'column1' => [
-            'name'        => 'column1',
-            'key'         => 'column1',
-            'label'       => 'Column1',
-            'type'        => 'text',
+            'name' => 'column1',
+            'key' => 'column1',
+            'label' => 'Column1',
+            'type' => 'text',
             'tableColumn' => false,
-            'orderable'   => false,
+            'orderable' => false,
             'searchLogic' => false,
-            'priority'    => 0,
+            'priority' => 0,
 
         ],
         'column2' => [
-            'name'        => 'column2',
-            'key'         => 'column2',
-            'label'       => 'Column2',
-            'type'        => 'text',
+            'name' => 'column2',
+            'key' => 'column2',
+            'label' => 'Column2',
+            'type' => 'text',
             'tableColumn' => false,
-            'orderable'   => false,
+            'orderable' => false,
             'searchLogic' => false,
-            'priority'    => 1,
+            'priority' => 1,
         ],
     ];
 
     private $threeColumnsArray = [
         [
-            'name'  => 'column1',
+            'name' => 'column1',
             'label' => 'Column1',
         ],
         [
-            'name'  => 'column2',
+            'name' => 'column2',
             'label' => 'Column2',
         ],
         [
-            'name'  => 'column3',
+            'name' => 'column3',
             'label' => 'Column3',
         ],
     ];
 
     private $expectedThreeColumnsArray = [
         'column1' => [
-            'name'        => 'column1',
-            'key'         => 'column1',
-            'label'       => 'Column1',
-            'type'        => 'text',
+            'name' => 'column1',
+            'key' => 'column1',
+            'label' => 'Column1',
+            'type' => 'text',
             'tableColumn' => false,
-            'orderable'   => false,
+            'orderable' => false,
             'searchLogic' => false,
-            'priority'    => 0,
+            'priority' => 0,
         ],
         'column2' => [
-            'name'        => 'column2',
-            'key'         => 'column2',
-            'label'       => 'Column2',
-            'type'        => 'text',
+            'name' => 'column2',
+            'key' => 'column2',
+            'label' => 'Column2',
+            'type' => 'text',
             'tableColumn' => false,
-            'orderable'   => false,
+            'orderable' => false,
             'searchLogic' => false,
-            'priority'    => 1,
+            'priority' => 1,
         ],
         'column3' => [
-            'name'        => 'column3',
-            'key'         => 'column3',
-            'label'       => 'Column3',
-            'type'        => 'text',
+            'name' => 'column3',
+            'key' => 'column3',
+            'label' => 'Column3',
+            'type' => 'text',
             'tableColumn' => false,
-            'orderable'   => false,
+            'orderable' => false,
             'searchLogic' => false,
-            'priority'    => 2,
+            'priority' => 2,
         ],
     ];
 
     private $expectedRelationColumnsArrayWithoutPro = [
         'accountDetails' => [
-            'name'          => 'accountDetails',
-            'label'         => 'AccountDetails',
-            'type'          => 'text',
-            'key'           => 'accountDetails',
-            'priority'      => 0,
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
-            'entity'        => 'accountDetails',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\AccountDetails',
+            'name' => 'accountDetails',
+            'label' => 'AccountDetails',
+            'type' => 'text',
+            'key' => 'accountDetails',
+            'priority' => 0,
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
+            'entity' => 'accountDetails',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
             'relation_type' => 'HasOne',
-            'attribute'     => 'nickname',
+            'attribute' => 'nickname',
         ],
         'accountDetails__nickname' => [
-            'name'          => 'accountDetails.nickname',
-            'label'         => 'AccountDetails.nickname',
-            'type'          => 'text',
-            'key'           => 'accountDetails__nickname',
-            'priority'      => 1,
-            'attribute'     => 'nickname',
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
+            'name' => 'accountDetails.nickname',
+            'label' => 'AccountDetails.nickname',
+            'type' => 'text',
+            'key' => 'accountDetails__nickname',
+            'priority' => 1,
+            'attribute' => 'nickname',
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
             'relation_type' => 'HasOne',
-            'entity'        => 'accountDetails.nickname',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\AccountDetails',
+            'entity' => 'accountDetails.nickname',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
         ],
         'accountDetails__user' => [
-            'name'          => 'accountDetails.user',
-            'label'         => 'AccountDetails.user',
-            'type'          => 'select',
-            'key'           => 'accountDetails__user',
-            'priority'      => 2,
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
+            'name' => 'accountDetails.user',
+            'label' => 'AccountDetails.user',
+            'type' => 'select',
+            'key' => 'accountDetails__user',
+            'priority' => 2,
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
             'relation_type' => 'BelongsTo',
-            'entity'        => 'accountDetails.user',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\User',
-            'attribute'     => 'name',
+            'entity' => 'accountDetails.user',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\User',
+            'attribute' => 'name',
         ],
     ];
 
     private $expectedRelationColumnsArrayWithPro = [
         'accountDetails' => [
-            'name'          => 'accountDetails',
-            'label'         => 'AccountDetails',
-            'type'          => 'relationship',
-            'key'           => 'accountDetails',
-            'priority'      => 0,
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
-            'entity'        => 'accountDetails',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\AccountDetails',
+            'name' => 'accountDetails',
+            'label' => 'AccountDetails',
+            'type' => 'relationship',
+            'key' => 'accountDetails',
+            'priority' => 0,
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
+            'entity' => 'accountDetails',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
             'relation_type' => 'HasOne',
-            'attribute'     => 'nickname',
+            'attribute' => 'nickname',
         ],
         'accountDetails__nickname' => [
-            'name'          => 'accountDetails.nickname',
-            'label'         => 'AccountDetails.nickname',
-            'type'          => 'relationship',
-            'key'           => 'accountDetails__nickname',
-            'priority'      => 1,
-            'attribute'     => 'nickname',
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
+            'name' => 'accountDetails.nickname',
+            'label' => 'AccountDetails.nickname',
+            'type' => 'relationship',
+            'key' => 'accountDetails__nickname',
+            'priority' => 1,
+            'attribute' => 'nickname',
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
             'relation_type' => 'HasOne',
-            'entity'        => 'accountDetails.nickname',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\AccountDetails',
+            'entity' => 'accountDetails.nickname',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
         ],
         'accountDetails__user' => [
-            'name'          => 'accountDetails.user',
-            'label'         => 'AccountDetails.user',
-            'type'          => 'relationship',
-            'key'           => 'accountDetails__user',
-            'priority'      => 2,
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
+            'name' => 'accountDetails.user',
+            'label' => 'AccountDetails.user',
+            'type' => 'relationship',
+            'key' => 'accountDetails__user',
+            'priority' => 2,
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
             'relation_type' => 'BelongsTo',
-            'entity'        => 'accountDetails.user',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\User',
-            'attribute'     => 'name',
+            'entity' => 'accountDetails.user',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\User',
+            'attribute' => 'name',
         ],
     ];
 
     private $relationColumnArray = [
-        'name'      => 'nickname',
-        'type'      => 'select',
-        'entity'    => 'accountDetails',
+        'name' => 'nickname',
+        'type' => 'select',
+        'entity' => 'accountDetails',
         'attribute' => 'nickname',
     ];
 
     private $expectedRelationColumnArray = [
         'nickname' => [
-            'name'          => 'nickname',
-            'type'          => 'select',
-            'entity'        => 'accountDetails',
-            'attribute'     => 'nickname',
-            'label'         => 'Nickname',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\AccountDetails',
-            'key'           => 'nickname',
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
-            'priority'      => 0,
+            'name' => 'nickname',
+            'type' => 'select',
+            'entity' => 'accountDetails',
+            'attribute' => 'nickname',
+            'label' => 'Nickname',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
+            'key' => 'nickname',
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
+            'priority' => 0,
             'relation_type' => 'HasOne',
         ],
     ];
 
     private $nestedRelationColumnArray = [
-        'name'      => 'accountDetails.article',
+        'name' => 'accountDetails.article',
     ];
 
     private $secondNestedRelationColumnArray = [
-        'name'      => 'accountDetails.article',
+        'name' => 'accountDetails.article',
         'attribute' => 'content',
-        'key'       => 'ac_article_content',
+        'key' => 'ac_article_content',
     ];
 
     private $expectedNestedRelationColumnArrayWithPro = [
         'accountDetails__article' => [
-            'name'          => 'accountDetails.article',
-            'type'          => 'relationship',
-            'entity'        => 'accountDetails.article',
-            'label'         => 'AccountDetails.article',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\Article',
-            'key'           => 'accountDetails__article',
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
-            'priority'      => 0,
+            'name' => 'accountDetails.article',
+            'type' => 'relationship',
+            'entity' => 'accountDetails.article',
+            'label' => 'AccountDetails.article',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\Article',
+            'key' => 'accountDetails__article',
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
+            'priority' => 0,
             'relation_type' => 'BelongsTo',
-            'attribute'     => 'content',
+            'attribute' => 'content',
         ],
         'ac_article_content' => [
-            'name'          => 'accountDetails.article',
-            'type'          => 'relationship',
-            'entity'        => 'accountDetails.article',
-            'label'         => 'AccountDetails.article',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\Article',
-            'key'           => 'ac_article_content',
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
-            'priority'      => 1,
+            'name' => 'accountDetails.article',
+            'type' => 'relationship',
+            'entity' => 'accountDetails.article',
+            'label' => 'AccountDetails.article',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\Article',
+            'key' => 'ac_article_content',
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
+            'priority' => 1,
             'relation_type' => 'BelongsTo',
-            'attribute'     => 'content',
+            'attribute' => 'content',
         ],
     ];
 
     private $expectedNestedRelationColumnArrayWithoutPro = [
         'accountDetails__article' => [
-            'name'          => 'accountDetails.article',
-            'type'          => 'select',
-            'entity'        => 'accountDetails.article',
-            'label'         => 'AccountDetails.article',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\Article',
-            'key'           => 'accountDetails__article',
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
-            'priority'      => 0,
+            'name' => 'accountDetails.article',
+            'type' => 'select',
+            'entity' => 'accountDetails.article',
+            'label' => 'AccountDetails.article',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\Article',
+            'key' => 'accountDetails__article',
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
+            'priority' => 0,
             'relation_type' => 'BelongsTo',
-            'attribute'     => 'content',
+            'attribute' => 'content',
         ],
         'ac_article_content' => [
-            'name'          => 'accountDetails.article',
-            'type'          => 'select',
-            'entity'        => 'accountDetails.article',
-            'label'         => 'AccountDetails.article',
-            'model'         => 'Backpack\CRUD\Tests\Unit\Models\Article',
-            'key'           => 'ac_article_content',
-            'tableColumn'   => false,
-            'orderable'     => false,
-            'searchLogic'   => false,
-            'priority'      => 1,
+            'name' => 'accountDetails.article',
+            'type' => 'select',
+            'entity' => 'accountDetails.article',
+            'label' => 'AccountDetails.article',
+            'model' => 'Backpack\CRUD\Tests\Config\Models\Article',
+            'key' => 'ac_article_content',
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
+            'priority' => 1,
             'relation_type' => 'BelongsTo',
-            'attribute'     => 'content',
+            'attribute' => 'content',
         ],
     ];
 
@@ -370,6 +370,43 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
         }
     }
 
+    public function testAddRelationByNameWithMutator()
+    {
+        $this->crudPanel->setModel(User::class);
+        $this->crudPanel->addColumn('accountDetails.nicknamutator');
+        if (backpack_pro()) {
+            $this->assertEquals(['accountDetails__nicknamutator' => [
+                'name' => 'accountDetails.nicknamutator',
+                'label' => 'AccountDetails.nicknamutator',
+                'type' => 'relationship',
+                'key' => 'accountDetails__nicknamutator',
+                'priority' => 0,
+                'attribute' => 'nicknamutator',
+                'tableColumn' => false,
+                'orderable' => false,
+                'searchLogic' => false,
+                'relation_type' => 'HasOne',
+                'entity' => 'accountDetails.nicknamutator',
+                'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
+            ]], $this->crudPanel->columns());
+        } else {
+            $this->assertEquals(['accountDetails__nicknamutator' => [
+                'name' => 'accountDetails.nicknamutator',
+                'label' => 'AccountDetails.nicknamutator',
+                'type' => 'text',
+                'key' => 'accountDetails__nicknamutator',
+                'priority' => 0,
+                'attribute' => 'nicknamutator',
+                'tableColumn' => false,
+                'orderable' => false,
+                'searchLogic' => false,
+                'relation_type' => 'HasOne',
+                'entity' => 'accountDetails.nicknamutator',
+                'model' => 'Backpack\CRUD\Tests\Config\Models\AccountDetails',
+            ]], $this->crudPanel->columns());
+        }
+    }
+
     public function testAddRelationColumn()
     {
         $this->crudPanel->setModel(User::class);
@@ -398,8 +435,17 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
         $this->crudPanel->beforeColumn('column1');
 
         $keys = array_keys($this->crudPanel->columns());
-        $this->assertEquals($this->expectedTwoColumnsArray['column2'], $this->crudPanel->columns()[$keys[0]]);
+        $expected = $this->expectedTwoColumnsArray['column2'];
+        $expected['priority'] = 0;
+        $this->assertEquals($expected, $this->crudPanel->columns()[$keys[0]]);
         $this->assertEquals(['column2', 'column1'], $keys);
+    }
+
+    public function testItDoesNotChangeThePriorityIfDeveloperDefinedIt()
+    {
+        $this->crudPanel->addColumn('column1');
+        $this->crudPanel->addColumn(['name' => 'column2', 'priority' => 5])->beforeColumn('column1');
+        $this->assertEquals(5, $this->crudPanel->firstColumnWhere('name', 'column2')['priority']);
     }
 
     public function testMoveColumnBeforeUnknownColumnName()
@@ -418,7 +464,9 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
         $this->crudPanel->afterColumn('column1');
 
         $keys = array_keys($this->crudPanel->columns());
-        $this->assertEquals($this->expectedThreeColumnsArray['column3'], $this->crudPanel->columns()[$keys[1]]);
+        $expected = $this->expectedThreeColumnsArray['column3'];
+        $expected['priority'] = 1;
+        $this->assertEquals($expected, $this->crudPanel->columns()[$keys[1]]);
         $this->assertEquals(['column1', 'column3', 'column2'], $keys);
     }
 
@@ -440,6 +488,67 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
         $this->assertEquals(2, count($this->crudPanel->columns()));
         $this->assertEquals(['column2', 'column3'], array_keys($this->crudPanel->columns()));
         $this->assertNotContains($this->oneColumnArray, $this->crudPanel->columns());
+    }
+
+    public function testItCanRemoveAllColumns()
+    {
+        $this->crudPanel->addColumns(['column1', 'column2', 'column3']);
+
+        $this->crudPanel->removeAllColumns();
+
+        $this->assertEmpty($this->crudPanel->columns());
+    }
+
+    public function testItCanSetColumnDetails()
+    {
+        $this->crudPanel->addColumns(['column1', 'column2', 'column3', 'column4', 'column5']);
+
+        $this->crudPanel->setColumnsDetails(['column1', 'column2'], ['label' => 'New Label']);
+        $this->crudPanel->setColumnDetails('column3', ['label' => 'Old Label']);
+        $this->crudPanel->modifyColumn('column4', ['label' => 'Alias Label']);
+        $this->crudPanel->setColumnLabel('column5', 'Setting Label');
+
+        $this->assertEquals('New Label', $this->crudPanel->columns()['column1']['label']);
+        $this->assertEquals('New Label', $this->crudPanel->columns()['column2']['label']);
+        $this->assertEquals('Old Label', $this->crudPanel->columns()['column3']['label']);
+        $this->assertEquals('Alias Label', $this->crudPanel->columns()['column4']['label']);
+        $this->assertEquals('Setting Label', $this->crudPanel->columns()['column5']['label']);
+    }
+
+    public function testItCanFindAColumnById()
+    {
+        $this->crudPanel->addColumns(['column1', 'column2', 'column3']);
+
+        $column = $this->crudPanel->findColumnById(1);
+
+        $this->assertEquals('column2', $column['name']);
+    }
+
+    public function testItCanGetAndSetActionsColumnPriority()
+    {
+        $this->assertEquals(1, $this->crudPanel->getActionsColumnPriority());
+        $this->crudPanel->setActionsColumnPriority(2);
+        $this->assertEquals(2, $this->crudPanel->getActionsColumnPriority());
+    }
+
+    public function testItCanGetAndSetColumnsRemovingPreviouslySet()
+    {
+        $this->crudPanel->addColumns(['column1', 'column2', 'column3']);
+
+        $this->crudPanel->setColumns('column4');
+
+        $this->assertEquals(1, count($this->crudPanel->columns()));
+        $this->assertEquals(['column4'], array_keys($this->crudPanel->columns()));
+
+        $this->crudPanel->setColumns(['column5', 'column6']);
+        $this->assertEquals(2, count($this->crudPanel->columns()));
+        $this->assertEquals(['column5', 'column6'], array_keys($this->crudPanel->columns()));
+
+        $this->crudPanel->setColumns(['column7', [
+            'name' => 'column8',
+        ]]);
+        $this->assertEquals(2, count($this->crudPanel->columns()));
+        $this->assertEquals(['column7', 'column8'], array_keys($this->crudPanel->columns()));
     }
 
     public function testRemoveUnknownColumnName()
@@ -477,18 +586,17 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
         $this->assertNotContains($this->otherOneColumnArray, $this->crudPanel->columns());
     }
 
-    public function testSetColumnDetails()
+    public function testItThrowsAnErrorWhenAttemptingToChangeTheKeyInAColumnWithoutName()
     {
-        $this->markTestIncomplete('Not correctly implemented');
-
-        // TODO: refactor crud panel sync method
+        $this->expectException(\Exception::class);
+        $this->crudPanel->addColumn(['type' => 'text'])->key('new_key');
     }
 
-    public function testSetColumnsDetails()
+    public function itCanSetTheUploadAttributeOnColumn()
     {
-        $this->markTestIncomplete('Not correctly implemented');
+        $this->crudPanel->addColumn('column1')->upload();
 
-        // TODO: refactor crud panel sync method
+        $this->assertEquals(true, $this->crudPanel->columns()['column1']['upload']);
     }
 
     public function testOrderColumns()
@@ -536,6 +644,80 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
         $this->assertEquals(['column2', 'column1', 'column3'], array_keys($this->crudPanel->columns()));
     }
 
+    public function testItDoesNotAttemptToGetEntityWhenColumnNameIsArray()
+    {
+        $this->crudPanel->addColumn(['name' => ['test1', 'test2'], 'label' => 'Column1', 'type' => 'text', 'key' => 'column1']);
+        $this->assertArrayNotHasKey('entity', $this->crudPanel->firstColumnWhere('key', 'column1'));
+    }
+
+    public function testItCanInferTheEntityFromColumnNameUsingEntity_idConvention()
+    {
+        $this->crudPanel->addColumn('article_id');
+
+        $this->assertEquals('article', $this->crudPanel->firstColumnWhere('name', 'article_id')['entity']);
+    }
+
+    public function testItAlwaysHasDatabaseColumnWhenDriverIsNotSql()
+    {
+        $this->crudPanel = new \Backpack\CRUD\Tests\config\CrudPanel\NoSqlDriverCrudPanel();
+        $this->crudPanel->setModel(User::class);
+
+        $this->assertTrue($this->invokeMethod($this->crudPanel, 'hasDatabaseColumn', ['test', 'test']));
+    }
+
+    public function testItCanGetTheColumnTypeFromModelCasts()
+    {
+        $this->crudPanel->addColumn('arrayCast');
+        $this->crudPanel->addColumn('jsonCast');
+        $this->crudPanel->addColumn('dateCast');
+        $this->crudPanel->addColumn('booleanCast');
+        $this->crudPanel->addColumn('datetimeCast');
+        $this->crudPanel->addColumn('numberCast');
+
+        $this->assertEquals('array', $this->crudPanel->firstColumnWhere('name', 'arrayCast')['type']);
+        $this->assertEquals('json', $this->crudPanel->firstColumnWhere('name', 'jsonCast')['type']);
+        $this->assertEquals('date', $this->crudPanel->firstColumnWhere('name', 'dateCast')['type']);
+        $this->assertEquals('check', $this->crudPanel->firstColumnWhere('name', 'booleanCast')['type']);
+        $this->assertEquals('datetime', $this->crudPanel->firstColumnWhere('name', 'datetimeCast')['type']);
+        $this->assertEquals('number', $this->crudPanel->firstColumnWhere('name', 'numberCast')['type']);
+    }
+
+    public function testItCanGetTheColumnTypeFromModelDates()
+    {
+        $this->crudPanel->addColumn('created_at');
+
+        $this->assertEquals('datetime', $this->crudPanel->firstColumnWhere('name', 'created_at')['type']);
+    }
+
+    public function testMakeFirstColumnReturnFalseWhenNoColumnsExist()
+    {
+        $this->assertEmpty($this->crudPanel->columns());
+        $column = $this->crudPanel->makeFirstColumn();
+        $this->assertFalse($column);
+    }
+
+    public function testItSetsTextColumnTypeForTranslatableColumns()
+    {
+        $this->crudPanel->setModel(\Backpack\CRUD\Tests\config\Models\TestModelWithTranslations::class);
+        $this->crudPanel->addColumn('translatableColumn');
+
+        $this->assertEquals('text', $this->crudPanel->firstColumnWhere('name', 'translatableColumn')['type']);
+    }
+
+    public function testItCanAddADefaultTypeToTheColumn()
+    {
+        $column = $this->crudPanel->addDefaultTypeToColumn(['name' => 'name']);
+
+        $this->assertEquals('text', $column['type']);
+    }
+
+    public function testItReturnFalseWhenTryingToAddTypeToAColumnWithoutName()
+    {
+        $column = $this->crudPanel->addDefaultTypeToColumn(['attribute' => 'name']);
+
+        $this->assertFalse($column);
+    }
+
     public function testItCanChangeTheColumnKey()
     {
         $this->crudPanel->column('test');
@@ -556,14 +738,14 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
         $this->assertCount(1, $this->crudPanel->columns());
 
         $this->assertEquals([
-            'name'               => 'my_column',
-            'type'               => 'text',
-            'label'              => 'my_column',
-            'key'                => 'my_column',
-            'priority'           => 0,
-            'tableColumn'        => false,
-            'orderable'          => false,
-            'searchLogic'        => false,
+            'name' => 'my_column',
+            'type' => 'text',
+            'label' => 'my_column',
+            'key' => 'my_column',
+            'priority' => 0,
+            'tableColumn' => false,
+            'orderable' => false,
+            'searchLogic' => false,
         ], $this->crudPanel->columns()['my_column']);
     }
 
@@ -598,6 +780,10 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
         $this->crudPanel->column('test4')->before('test1');
         $crudColumnsNames = array_column($this->crudPanel->columns(), 'name');
         $this->assertEquals($crudColumnsNames, ['test4', 'test1', 'test3', 'test2']);
+
+        $this->crudPanel->column('test5')->afterColumn('test1');
+        $crudColumnsNames = array_column($this->crudPanel->columns(), 'name');
+        $this->assertEquals($crudColumnsNames, ['test4', 'test1', 'test5', 'test3', 'test2']);
     }
 
     public function testItCanRemoveColumnAttributesFluently()
@@ -620,5 +806,180 @@ class CrudPanelColumnsTest extends BaseDBCrudPanelTest
     {
         CrudColumn::name('test');
         $this->assertCount(1, $this->crudPanel->columns());
+    }
+
+    public function testItCanAddAFluentColumnUsingArray()
+    {
+        $this->crudPanel->column($this->oneColumnArray);
+        $this->assertCount(1, $this->crudPanel->columns());
+    }
+
+    public function testItCanAddAFluentColumnUsingArrayWithoutName()
+    {
+        $this->crudPanel->column(['type' => 'text']);
+        $this->assertCount(1, $this->crudPanel->columns());
+    }
+
+    public function testColumnLinkToThrowsExceptionWhenNotAllRequiredParametersAreFilled()
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Route [article.show.detail] expects parameters [id, detail]. Insufficient parameters provided in column: [articles].');
+        $this->crudPanel->column('articles')->entity('articles')->linkTo('article.show.detail', ['test' => 'testing']);
+    }
+
+    public function testItThrowsExceptionIfRouteNotFound()
+    {
+        $this->expectException(\Exception::class);
+        $this->expectExceptionMessage('Route [users.route.doesnt.exist] not found while building the link for column [id].');
+
+        CrudColumn::name('id')->linkTo('users.route.doesnt.exist')->toArray();
+    }
+
+    public function testColumnLinkToWithRouteNameOnly()
+    {
+        $this->crudPanel->column('articles')->entity('articles')->linkTo('articles.show');
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $reflection = new \ReflectionFunction($columnArray['wrapper']['href']);
+        $arguments = $reflection->getClosureUsedVariables();
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('articles.show', $arguments['route']);
+        $this->assertCount(1, $arguments['parameters']);
+        $this->assertEquals('http://localhost/admin/articles/1/show', $url);
+    }
+
+    public function testColumnLinkToWithRouteNameAndAdditionalParameters()
+    {
+        $this->crudPanel->column('articles')->entity('articles')->linkTo('articles.show', ['test' => 'testing', 'test2' => 'testing2']);
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $reflection = new \ReflectionFunction($columnArray['wrapper']['href']);
+        $arguments = $reflection->getClosureUsedVariables();
+        $this->assertEquals('articles.show', $arguments['route']);
+        $this->assertCount(3, $arguments['parameters']);
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/1/show?test=testing&test2=testing2', $url);
+    }
+
+    public function testColumnLinkToWithCustomParameters()
+    {
+        $this->crudPanel->column('articles')->entity('articles')->linkTo('article.show.detail', ['detail' => 'testing', 'otherParam' => 'test']);
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/1/show/testing?otherParam=test', $url);
+    }
+
+    public function testColumnLinkToWithCustomClosureParameters()
+    {
+        $this->crudPanel->column('articles')
+                        ->entity('articles')
+                        ->linkTo('article.show.detail', ['detail' => fn ($entry, $related_key) => $related_key, 'otherParam' => fn ($entry) => $entry->content]);
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/1/show/1?otherParam=Some%20Content', $url);
+    }
+
+    public function testColumnLinkToDontAutoInferParametersIfAllProvided()
+    {
+        $this->crudPanel->column('articles')
+                        ->entity('articles')
+                        ->linkTo('article.show.detail', ['id' => 123, 'detail' => fn ($entry, $related_key) => $related_key, 'otherParam' => fn ($entry) => $entry->content]);
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/123/show/1?otherParam=Some%20Content', $url);
+    }
+
+    public function testColumnLinkToAutoInferAnySingleParameter()
+    {
+        $this->crudPanel->column('articles')
+                        ->entity('articles')
+                        ->linkTo('article.show.detail', ['id' => 123, 'otherParam' => fn ($entry) => $entry->content]);
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/123/show/1?otherParam=Some%20Content', $url);
+    }
+
+    public function testColumnLinkToWithClosure()
+    {
+        $this->crudPanel->column('articles')
+                        ->entity('articles')
+                        ->linkTo(fn ($entry) => route('articles.show', $entry->content));
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/Some%20Content/show', $url);
+    }
+
+    public function testColumnArrayDefinitionLinkToRouteAsClosure()
+    {
+        $this->crudPanel->setModel(User::class);
+        $this->crudPanel->column([
+            'name' => 'articles',
+            'entity' => 'articles',
+            'linkTo' => fn ($entry) => route('articles.show', ['id' => $entry->id, 'test' => 'testing']),
+        ]);
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/1/show?test=testing', $url);
+    }
+
+    public function testColumnArrayDefinitionLinkToRouteNameOnly()
+    {
+        $this->crudPanel->setModel(User::class);
+        $this->crudPanel->column([
+            'name' => 'articles',
+            'entity' => 'articles',
+            'linkTo' => 'articles.show',
+        ]);
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/1/show', $url);
+    }
+
+    public function testColumnArrayDefinitionLinkToRouteNameAndAdditionalParameters()
+    {
+        $this->crudPanel->setModel(User::class);
+        $this->crudPanel->column([
+            'name' => 'articles',
+            'entity' => 'articles',
+            'linkTo' => [
+                'route' => 'articles.show',
+                'parameters' => [
+                    'test' => 'testing',
+                    'test2' => fn ($entry) => $entry->content,
+                ],
+            ],
+        ]);
+        $columnArray = $this->crudPanel->columns()['articles'];
+        $reflection = new \ReflectionFunction($columnArray['wrapper']['href']);
+        $arguments = $reflection->getClosureUsedVariables();
+        $this->assertEquals('articles.show', $arguments['route']);
+        $this->assertCount(3, $arguments['parameters']);
+        $this->crudPanel->entry = $this->makeAnArticleModel();
+        $url = $columnArray['wrapper']['href']($this->crudPanel, $columnArray, $this->crudPanel->entry, 1);
+        $this->assertEquals('http://localhost/admin/articles/1/show?test=testing&test2=Some%20Content', $url);
+    }
+
+    public function testItCanInferFieldAttributesFromADynamicRelation()
+    {
+        User::resolveRelationUsing('dynamicRelation', function ($user) {
+            return $user->belongsTo(\Backpack\CRUD\Tests\config\Models\Bang::class);
+        });
+
+        $this->crudPanel->setModel(User::class);
+        $this->crudPanel->addColumn('dynamicRelation');
+
+        $column = $this->crudPanel->columns()['dynamicRelation'];
+
+        $this->assertEquals('dynamicRelation', $column['name']);
+        $this->assertEquals('name', $column['attribute']);
+        $this->assertEquals('relationship', $column['type']);
+        $this->assertEquals('BelongsTo', $column['relation_type']);
     }
 }

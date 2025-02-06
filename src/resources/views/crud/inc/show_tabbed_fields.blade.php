@@ -6,6 +6,11 @@
         }
         foreach(session()->get('errors')->getBags() as $bag => $errorMessages) {
             foreach($errorMessages->getMessages() as $fieldName => $messages) {
+
+                // extract the "parent" field name by separating the field name string by `.digit.` (eg. relation.0.fieldName)
+                // and take the first element,  AKA the "parent" name. In the above example: `relation` 
+                $fieldName = preg_split('/\.\d+\./',$fieldName)[0];
+
                 if(array_key_exists($fieldName, $crud->getCurrentFields()) && array_key_exists('tab', $crud->getCurrentFields()[$fieldName])) {
                     return $crud->getCurrentFields()[$fieldName]['tab'];
                 }
@@ -30,25 +35,39 @@
     <div class="nav-tabs-custom {{ $horizontalTabs ? '' : 'row'}}" id="form_tabs">
         <ul class="nav {{ $horizontalTabs ? 'nav-tabs' : 'flex-column nav-pills'}} {{ $horizontalTabs ? '' : 'col-md-3' }}" role="tablist">
             @foreach ($crud->getTabs() as $k => $tab)
+            @php
+                $tabSlug = Str::slug($tab);
+                if(empty($tabSlug)) {
+                    $tabSlug = $k;
+                }
+            @endphp
                 <li role="presentation" class="nav-item">
-                    <a href="#tab_{{ Str::slug($tab) }}"
-                        aria-controls="tab_{{ Str::slug($tab) }}"
+                    <a href="#tab_{{ $tabSlug }}"
+                        aria-controls="tab_{{ $tabSlug }}"
                         role="tab"
-                        tab_name="{{ Str::slug($tab) }}"
-                        data-toggle="tab"
-                        class="nav-link {{ isset($tabWithError) && $tabWithError ? ($tab == $tabWithError ? 'active' : '') : ($k == 0 ? 'active' : '') }}"
+                        data-toggle="tab" {{-- tab indicator for Bootstrap v4 --}}
+                        tab_name="{{ $tabSlug }}" {{-- tab name for Bootstrap v4 --}}
+                        data-name="{{ $tabSlug }}" {{-- tab name for Bootstrap v5 --}}
+                        data-bs-toggle="tab" {{-- tab name for Bootstrap v5 --}}
+                        class="nav-link text-decoration-none {{ isset($tabWithError) && $tabWithError ? ($tab == $tabWithError ? 'active' : '') : ($k == 0 ? 'active' : '') }}"
                         >{{ $tab }}</a>
                 </li>
             @endforeach
         </ul>
 
-        <div class="tab-content p-0 {{$horizontalTabs ? '' : 'col-md-9'}}">
+        <div class="tab-content {{$horizontalTabs ? '' : 'col-md-9'}}">
 
-            @foreach ($crud->getTabs() as $k => $tab)
-            <div role="tabpanel" class="tab-pane {{ isset($tabWithError) && $tabWithError ? ($tab == $tabWithError ? ' active' : '') : ($k == 0 ? ' active' : '') }}" id="tab_{{ Str::slug($tab) }}">
+            @foreach ($crud->getTabs() as $k => $tabLabel)
+            @php
+                $tabSlug = Str::slug($tabLabel);
+                if(empty($tabSlug)) {
+                    $tabSlug = $k;
+                }
+            @endphp
+            <div role="tabpanel" class="tab-pane {{ isset($tabWithError) && $tabWithError ? ($tabLabel == $tabWithError ? ' active' : '') : ($k == 0 ? ' active' : '') }}" id="tab_{{ $tabSlug }}">
 
                 <div class="row">
-                @include('crud::inc.show_fields', ['fields' => $crud->getTabFields($tab)])
+                    @include('crud::inc.show_fields', ['fields' => $crud->getTabItems($tabLabel, 'fields')])
                 </div>
             </div>
             @endforeach

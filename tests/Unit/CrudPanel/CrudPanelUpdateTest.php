@@ -2,10 +2,11 @@
 
 namespace Backpack\CRUD\Tests\Unit\CrudPanel;
 
-use Backpack\CRUD\Tests\Unit\Models\User;
+use Backpack\CRUD\Tests\config\Models\User;
 use Faker\Factory;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Hash;
 
 /**
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Update
@@ -13,7 +14,7 @@ use Illuminate\Support\Facades\DB;
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\FieldsProtectedMethods
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Input
  */
-class CrudPanelUpdateTest extends BaseDBCrudPanelTest
+class CrudPanelUpdateTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCrudPanel
 {
     private $userInputFields = [
         [
@@ -32,27 +33,27 @@ class CrudPanelUpdateTest extends BaseDBCrudPanelTest
 
     private $expectedUpdatedFields = [
         'id' => [
-            'name'   => 'id',
-            'type'   => 'hidden',
-            'label'  => 'Id',
+            'name' => 'id',
+            'type' => 'hidden',
+            'label' => 'Id',
             'entity' => false,
         ],
         'name' => [
-            'name'   => 'name',
-            'label'  => 'Name',
-            'type'   => 'text',
+            'name' => 'name',
+            'label' => 'Name',
+            'type' => 'text',
             'entity' => false,
         ],
         'email' => [
-            'name'   => 'email',
-            'type'   => 'email',
-            'label'  => 'Email',
+            'name' => 'email',
+            'type' => 'email',
+            'label' => 'Email',
             'entity' => false,
         ],
         'password' => [
-            'name'   => 'password',
-            'type'   => 'password',
-            'label'  => 'Password',
+            'name' => 'password',
+            'type' => 'password',
+            'label' => 'Password',
             'entity' => false,
         ],
     ];
@@ -63,9 +64,9 @@ class CrudPanelUpdateTest extends BaseDBCrudPanelTest
         $this->crudPanel->addFields($this->userInputFields);
         $faker = Factory::create();
         $inputData = [
-            'name'     => $faker->name,
-            'email'    => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'name' => $faker->name,
+            'email' => $faker->safeEmail,
+            'password' => Hash::make($faker->password()),
         ];
 
         $entry = $this->crudPanel->update(1, $inputData);
@@ -82,9 +83,9 @@ class CrudPanelUpdateTest extends BaseDBCrudPanelTest
         $this->crudPanel->addFields($this->userInputFields);
         $faker = Factory::create();
         $inputData = [
-            'name'     => $faker->name,
-            'email'    => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'name' => $faker->name,
+            'email' => $faker->safeEmail,
+            'password' => Hash::make($faker->password()),
         ];
 
         $unknownId = DB::getPdo()->lastInsertId() + 2;
@@ -97,9 +98,9 @@ class CrudPanelUpdateTest extends BaseDBCrudPanelTest
         $this->crudPanel->addFields($this->userInputFields);
         $faker = Factory::create();
         $inputData = [
-            'name'     => $faker->name,
-            'email'    => $faker->safeEmail,
-            'password' => bcrypt($faker->password()),
+            'name' => $faker->name,
+            'email' => $faker->safeEmail,
+            'password' => Hash::make($faker->password()),
         ];
         $entry = $this->crudPanel->create($inputData);
         $this->addValuesToExpectedFields($entry->id, $inputData);
@@ -118,6 +119,56 @@ class CrudPanelUpdateTest extends BaseDBCrudPanelTest
 
         $unknownId = DB::getPdo()->lastInsertId() + 2;
         $this->crudPanel->getUpdateFields($unknownId);
+    }
+
+    public function testGetUpdateFieldsWithEnum()
+    {
+        $this->crudPanel->setModel(\Backpack\CRUD\Tests\config\Models\ArticleWithEnum::class);
+        $this->crudPanel->addFields([[
+            'name' => 'id',
+            'type' => 'hidden',
+        ], [
+            'name' => 'content',
+        ], [
+            'name' => 'tags',
+        ], [
+            'label' => 'Author',
+            'type' => 'select',
+            'name' => 'user_id',
+            'entity' => 'user',
+            'attribute' => 'name',
+        ], [
+            'name' => 'status',
+        ],
+            [
+                'name' => 'state',
+            ],
+            [
+                'name' => 'style',
+            ],
+        ]);
+        $faker = Factory::create();
+        $inputData = [
+            'content' => $faker->text(),
+            'tags' => $faker->words(3, true),
+            'user_id' => 1,
+            'metas' => null,
+            'extras' => null,
+            'status' => 'publish',
+            'state' => 'COLD',
+            'style' => 'DRAFT',
+            'cast_metas' => null,
+            'cast_tags' => null,
+            'cast_extras' => null,
+        ];
+        $article = $this->crudPanel->create($inputData);
+
+        $updateFields = $this->crudPanel->getUpdateFields(2);
+
+        $this->assertTrue($updateFields['status']['value']->value === 'publish');
+        $this->assertTrue($updateFields['status']['value']->name === 'PUBLISHED');
+        $this->assertTrue($updateFields['state']['value']->name === 'COLD');
+        $this->assertTrue($updateFields['style']['value']->color() === 'red');
     }
 
     private function addValuesToExpectedFields($id, $inputData)

@@ -2,7 +2,9 @@
 
 namespace Backpack\CRUD\app\Library\CrudPanel\Traits;
 
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Arr;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
 
 trait Update
@@ -25,7 +27,16 @@ trait Update
         $item = $this->model->findOrFail($id);
 
         [$directInputs, $relationInputs] = $this->splitInputIntoDirectAndRelations($input);
-        $updated = $item->update($directInputs);
+        if ($this->get('update.useDatabaseTransactions') ?? config('backpack.base.useDatabaseTransactions', false)) {
+            return DB::transaction(fn () => $this->updateModelAndRelations($item, $directInputs, $relationInputs));
+        }
+
+        return $this->updateModelAndRelations($item, $directInputs, $relationInputs);
+    }
+
+    private function updateModelAndRelations(Model $item, array $directInputs, array $relationInputs): Model
+    {
+        $item->update($directInputs);
         $this->createRelationsForItem($item, $relationInputs);
 
         return $item;
@@ -40,7 +51,7 @@ trait Update
     public function getUpdateFields($id = false)
     {
         $fields = $this->fields();
-        $entry = ($id != false) ? $this->getEntry($id) : $this->getCurrentEntry();
+        $entry = ($id != false) ? $this->getEntryWithLocale($id) : $this->getCurrentEntryWithLocale();
 
         foreach ($fields as &$field) {
             $field['value'] = $field['value'] ?? $this->getModelAttributeValue($entry, $field);
@@ -49,9 +60,9 @@ trait Update
         // always have a hidden input for the entry id
         if (! array_key_exists('id', $fields)) {
             $fields['id'] = [
-                'name'  => $entry->getKeyName(),
+                'name' => $entry->getKeyName(),
                 'value' => $entry->getKey(),
-                'type'  => 'hidden',
+                'type' => 'hidden',
             ];
         }
 
@@ -76,18 +87,15 @@ trait Update
             return $this->getModelAttributeValueFromRelationship($model, $field);
         }
 
-        if (is_string($field['name'])) {
-            return $model->{$field['name']};
-        }
-
-        if (is_array($field['name'])) {
-            $result = [];
-            foreach ($field['name'] as $name) {
-                $result[] = $model->{$name};
-            }
+        if ($this->holdsMultipleInputs($field['name'])) {
+            $result = array_map(function ($item) use ($model) {
+                return $model->{$item};
+            }, explode(',', $field['name']));
 
             return $result;
         }
+
+        return $model->{$field['name']};
     }
 
     /**
@@ -102,7 +110,7 @@ trait Update
     {
         [$relatedModel, $relationMethod] = $this->getModelAndMethodFromEntity($model, $field);
 
-        if (! method_exists($relatedModel, $relationMethod)) {
+        if (! method_exists($relatedModel, $relationMethod) && ! $relatedModel->isRelation($relationMethod)) {
             return $relatedModel->{$relationMethod};
         }
 
@@ -118,11 +126,12 @@ trait Update
                 $result = collect();
 
                 foreach ($relationModels as $model) {
-                    $model = $this->setupRelatedModelLocale($model);
+                    $model = $this->setLocaleOnModel($model);
                     // when subfields are NOT set we don't need to get any more values
                     // we just return the plain models as we only need the ids
                     if (! isset($field['subfields'])) {
                         $result->push($model);
+
                         continue;
                     }
                     // when subfields are set we need to parse their values so they can be displayed
@@ -148,7 +157,7 @@ trait Update
                 break;
             case 'HasOne':
             case 'MorphOne':
-                if (! method_exists($relatedModel, $relationMethod)) {
+                if (! method_exists($relatedModel, $relationMethod) && ! $relatedModel->isRelation($relationMethod)) {
                     return;
                 }
 
@@ -158,7 +167,7 @@ trait Update
                     return;
                 }
 
-                $model = $this->setupRelatedModelLocale($model);
+                $model = $this->setLocaleOnModel($model);
                 $model = $this->getModelWithFakes($model);
 
                 // if `entity` contains a dot here it means developer added a main HasOne/MorphOne relation with dot notation
@@ -167,7 +176,7 @@ trait Update
                 }
 
                 // when subfields exists developer used the repeatable interface to manage this relation
-                if ($field['subfields']) {
+                if (isset($field['subfields'])) {
                     return [$this->getSubfieldsValues($field['subfields'], $model)];
                 }
 
@@ -184,24 +193,6 @@ trait Update
             default:
                 return $relatedModel->{$relationMethod};
         }
-    }
-
-    /**
-     * Set the locale on the related models.
-     *
-     * @param  \Illuminate\Database\Eloquent\Model  $model
-     * @return \Illuminate\Database\Eloquent\Model
-     */
-    private function setupRelatedModelLocale($model)
-    {
-        if (method_exists($model, 'translationEnabled') && $model->translationEnabled()) {
-            $locale = request('_locale', \App::getLocale());
-            if (in_array($locale, array_keys($model->getAvailableLocales()))) {
-                $model->setLocale($locale);
-            }
-        }
-
-        return $model;
     }
 
     /**
@@ -265,12 +256,10 @@ trait Update
                 if (! Str::contains($name, '.')) {
                     // when subfields are present, $relatedModel->{$name} returns a model instance
                     // otherwise returns the model attribute.
-                    if ($relatedModel->{$name}) {
-                        if (isset($subfield['subfields'])) {
-                            $result[$name] = [$relatedModel->{$name}->only(array_column($subfield['subfields'], 'name'))];
-                        } else {
-                            $result[$name] = $relatedModel->{$name};
-                        }
+                    if ($relatedModel->{$name} && isset($subfield['subfields'])) {
+                        $result[$name] = [$relatedModel->{$name}->only(array_column($subfield['subfields'], 'name'))];
+                    } else {
+                        $result[$name] = $relatedModel->{$name};
                     }
                 } else {
                     // if the subfield name contains a dot, we are going to iterate through
@@ -283,7 +272,12 @@ trait Update
                         $iterator = $iterator->$part;
                     }
 
-                    Arr::set($result, $name, (is_a($iterator, 'Illuminate\Database\Eloquent\Model', true) ? $this->getModelWithFakes($iterator)->getAttributes() : $iterator));
+                    if (is_a($iterator, 'Illuminate\Database\Eloquent\Model', true)) {
+                        $iterator = $this->setLocaleOnModel($iterator);
+                        $iterator = $this->getModelWithFakes($iterator)->getAttributes();
+                    }
+
+                    Arr::set($result, $name, $iterator);
                 }
             }
         }

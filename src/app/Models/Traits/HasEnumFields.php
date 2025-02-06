@@ -3,7 +3,6 @@
 namespace Backpack\CRUD\app\Models\Traits;
 
 use DB;
-use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\Config;
 
 /*
@@ -28,7 +27,7 @@ trait HasEnumFields
 
             $type = $connection->select($select)[0]->Type;
         } catch (\Exception $e) {
-            abort(500, 'Enum field type is not supported - it only works on MySQL. Please use select_from_array instead.');
+            abort(500, 'Enum field type is not supported - it only works on MySQL. Please use select_from_array instead.', ['developer-error-exception']);
         }
 
         preg_match('/^enum\((.*)\)$/', $type, $matches);

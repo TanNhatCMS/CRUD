@@ -2,9 +2,9 @@
 
 namespace Backpack\CRUD\Tests\Unit\CrudPanel;
 
-use Backpack\CRUD\Tests\Unit\Models\Article;
-use Backpack\CRUD\Tests\Unit\Models\Role;
-use Backpack\CRUD\Tests\Unit\Models\User;
+use Backpack\CRUD\Tests\config\Models\Article;
+use Backpack\CRUD\Tests\config\Models\Role;
+use Backpack\CRUD\Tests\config\Models\User;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -13,36 +13,36 @@ use Illuminate\Support\Facades\DB;
  * @covers Backpack\CRUD\app\Library\CrudPanel\Traits\Read
  * @covers Backpack\CRUD\app\Library\CrudPanel\CrudPanel
  */
-class CrudPanelReadTest extends BaseDBCrudPanelTest
+class CrudPanelReadTest extends \Backpack\CRUD\Tests\config\CrudPanel\BaseDBCrudPanel
 {
     private $relationshipColumn = [
-        'name'      => 'user_id',
-        'type'      => 'select',
-        'entity'    => 'user',
+        'name' => 'user_id',
+        'type' => 'select',
+        'entity' => 'user',
         'attribute' => 'name',
     ];
 
     private $relationshipMultipleColumn = [
-        'name'      => 'roles',
-        'type'      => 'select',
-        'entity'    => 'roles',
+        'name' => 'roles',
+        'type' => 'select',
+        'entity' => 'roles',
         'attribute' => 'name',
-        'model'     => Role::class,
+        'model' => Role::class,
     ];
 
     private $nonRelationshipColumn = [
-        'name'  => 'field1',
+        'name' => 'field1',
         'label' => 'Field1',
     ];
 
     private $articleFieldsArray = [
         [
-            'name'  => 'content',
+            'name' => 'content',
             'label' => 'The Content',
-            'type'  => 'text',
+            'type' => 'text',
         ],
         [
-            'name'  => 'metas',
+            'name' => 'metas',
             'label' => 'Metas',
         ],
         [
@@ -55,78 +55,78 @@ class CrudPanelReadTest extends BaseDBCrudPanelTest
 
     private $expectedCreateFormArticleFieldsArray = [
         'content' => [
-            'name'   => 'content',
-            'label'  => 'The Content',
-            'type'   => 'text',
+            'name' => 'content',
+            'label' => 'The Content',
+            'type' => 'text',
             'entity' => false,
         ],
         'metas' => [
-            'name'   => 'metas',
-            'label'  => 'Metas',
-            'type'   => 'text',
+            'name' => 'metas',
+            'label' => 'Metas',
+            'type' => 'text',
             'entity' => false,
         ],
         'tags' => [
-            'name'   => 'tags',
-            'label'  => 'Tags',
-            'type'   => 'text',
+            'name' => 'tags',
+            'label' => 'Tags',
+            'type' => 'text',
             'entity' => false,
         ],
         'extras' => [
-            'name'   => 'extras',
-            'label'  => 'Extras',
-            'type'   => 'text',
+            'name' => 'extras',
+            'label' => 'Extras',
+            'type' => 'text',
             'entity' => false,
         ],
     ];
 
     private $expectedUpdateFormArticleFieldsArray = [
         'content' => [
-            'name'   => 'content',
-            'label'  => 'The Content',
-            'type'   => 'text',
-            'value'  => 'Some Content',
+            'name' => 'content',
+            'label' => 'The Content',
+            'type' => 'text',
+            'value' => 'Some Content',
             'entity' => false,
         ],
         'metas' => [
-            'name'   => 'metas',
-            'label'  => 'Metas',
-            'type'   => 'text',
-            'value'  => '{"meta_title":"Meta Title Value","meta_description":"Meta Description Value"}',
+            'name' => 'metas',
+            'label' => 'Metas',
+            'type' => 'text',
+            'value' => '{"meta_title":"Meta Title Value","meta_description":"Meta Description Value"}',
             'entity' => false,
         ],
         'tags' => [
-            'name'   => 'tags',
-            'label'  => 'Tags',
-            'type'   => 'text',
-            'value'  => '{"tags":["tag1","tag2","tag3"]}',
+            'name' => 'tags',
+            'label' => 'Tags',
+            'type' => 'text',
+            'value' => '{"tags":["tag1","tag2","tag3"]}',
             'entity' => false,
         ],
         'extras' => [
-            'name'   => 'extras',
-            'label'  => 'Extras',
-            'type'   => 'text',
-            'value'  => '{"extra_details":["detail1","detail2","detail3"]}',
+            'name' => 'extras',
+            'label' => 'Extras',
+            'type' => 'text',
+            'value' => '{"extra_details":["detail1","detail2","detail3"]}',
             'entity' => false,
         ],
         'id' => [
-            'name'  => 'id',
-            'type'  => 'hidden',
+            'name' => 'id',
+            'type' => 'hidden',
             'value' => 1,
         ],
     ];
 
     private $uploadField = [
-        'name'   => 'image',
-        'label'  => 'Image',
-        'type'   => 'upload',
+        'name' => 'image',
+        'label' => 'Image',
+        'type' => 'upload',
         'upload' => true,
     ];
 
     private $multipleUploadField = [
-        'name'   => 'photos',
-        'label'  => 'Photos',
-        'type'   => 'upload_multiple',
+        'name' => 'photos',
+        'label' => 'Photos',
+        'type' => 'upload_multiple',
         'upload' => true,
     ];
 
@@ -344,7 +344,7 @@ class CrudPanelReadTest extends BaseDBCrudPanelTest
         $this->assertEquals([1 => 'admin', 2 => 'user'], $entries);
     }
 
-    public function testGetRelatedEntriesAttributesFromBelongsToManyWithAcessor()
+    public function testGetRelatedEntriesAttributesFromBelongsToManyWithAccessor()
     {
         $this->crudPanel->setModel(User::class);
         $this->crudPanel->setOperation('list');
@@ -362,7 +362,7 @@ class CrudPanelReadTest extends BaseDBCrudPanelTest
         $this->assertCount(1, $entries);
     }
 
-    public function testGetRelatedEntriesAttributesFromHasManyWithAcessor()
+    public function testGetRelatedEntriesAttributesFromHasManyWithAccessor()
     {
         $this->crudPanel->setModel(User::class);
         $this->crudPanel->setOperation('list');
@@ -380,7 +380,7 @@ class CrudPanelReadTest extends BaseDBCrudPanelTest
         $this->assertCount(1, $entries);
     }
 
-    public function testGetRelatedEntriesAttributesFromBelongsToWithAcessor()
+    public function testGetRelatedEntriesAttributesFromBelongsToWithAccessor()
     {
         $this->crudPanel->setModel(Article::class);
         $this->crudPanel->setOperation('list');
@@ -398,7 +398,7 @@ class CrudPanelReadTest extends BaseDBCrudPanelTest
         $this->assertCount(1, $entries);
     }
 
-    public function testGetRelatedEntriesAttributesFromHasOneWithAcessor()
+    public function testGetRelatedEntriesAttributesFromHasOneWithAccessor()
     {
         $this->crudPanel->setModel(User::class);
         $this->crudPanel->setOperation('list');

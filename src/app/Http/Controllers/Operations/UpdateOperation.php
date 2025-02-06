@@ -16,14 +16,14 @@ trait UpdateOperation
     protected function setupUpdateRoutes($segment, $routeName, $controller)
     {
         Route::get($segment.'/{id}/edit', [
-            'as'        => $routeName.'.edit',
-            'uses'      => $controller.'@edit',
+            'as' => $routeName.'.edit',
+            'uses' => $controller.'@edit',
             'operation' => 'update',
         ]);
 
         Route::put($segment.'/{id}', [
-            'as'        => $routeName.'.update',
-            'uses'      => $controller.'@update',
+            'as' => $routeName.'.update',
+            'uses' => $controller.'@update',
             'operation' => 'update',
         ]);
     }
@@ -63,11 +63,16 @@ trait UpdateOperation
     public function edit($id)
     {
         $this->crud->hasAccessOrFail('update');
+
         // get entry ID from Request (makes sure its the last ID for nested resources)
         $id = $this->crud->getCurrentEntryId() ?? $id;
-        // get the info for that entry
 
+        // register any Model Events defined on fields
+        $this->crud->registerFieldEvents();
+
+        // get the info for that entry
         $this->data['entry'] = $this->crud->getEntryWithLocale($id);
+
         $this->crud->setOperationSetting('fields', $this->crud->getUpdateFields());
 
         $this->data['crud'] = $this->crud;
@@ -82,7 +87,7 @@ trait UpdateOperation
     /**
      * Update the specified resource in the database.
      *
-     * @return array|\Illuminate\Http\RedirectResponse
+     * @return \Illuminate\Http\JsonResponse|\Illuminate\Http\RedirectResponse
      */
     public function update()
     {
